@@ -12,8 +12,8 @@ export default function PricingPage() {
     <div className="page-enter relative min-h-screen pb-16">
       {/* Header */}
       <header className="relative pt-10 pb-8 text-center overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 plaid-bg opacity-10" />
+        {/* Background pattern */}
+        <div className="absolute inset-0 plaid-bg opacity-25" />
 
         <div className="relative z-10 px-4">
           <h1 className="font-[family-name:var(--font-family-display)] text-3xl sm:text-4xl text-apple-red text-shadow-cute mb-2">

@@ -7,7 +7,7 @@ export default function HeroSection() {
   return (
     <section id="hero" className="relative min-h-[72vh] flex flex-col items-center justify-center overflow-hidden pt-12 pb-10">
       {/* Background pattern */}
-      <div className="absolute inset-0 plaid-bg opacity-15" />
+      <div className="absolute inset-0 plaid-bg opacity-30" />
 
       {/* Apple blossoms */}
       <AppleBlossoms count={12} />
