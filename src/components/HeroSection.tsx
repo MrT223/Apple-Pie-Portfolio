@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { AppleBlossoms, HeartApple, WobbleApple } from "./AppleAnimations";
+import Image from "next/image";
+import { AppleBlossoms, HeartApple } from "./AppleAnimations";
 
 export default function HeroSection() {
   return (
@@ -18,8 +19,8 @@ export default function HeroSection() {
         <div className="relative mb-6">
           {/* Gingham circle frame */}
           <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full gingham-bg p-1.5 shadow-xl animate-[pulse-gentle_3s_ease-in-out_infinite]">
-            <div className="w-full h-full rounded-full bg-cream flex items-center justify-center overflow-hidden border-2 border-white">
-              <WobbleApple size={68} />
+            <div className="w-full h-full rounded-full bg-cream flex items-center justify-center overflow-hidden border-2 border-white relative">
+              <Image src="/avt.jpg" alt="Artist Avatar" fill sizes="(max-width: 768px) 128px, 144px" className="object-cover" priority />
             </div>
           </div>
 
