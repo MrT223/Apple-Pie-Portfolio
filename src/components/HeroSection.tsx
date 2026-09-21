@@ -4,7 +4,19 @@ import React from "react";
 import Image from "next/image";
 import { AppleBlossoms, HeartApple } from "./AppleAnimations";
 
+const JAPANESE_QUOTES = [
+  "天上天下唯我独尊",
+  "敵が次の手を予測できるなら、動かなければいい。",
+  "おしっこをしても必ずうんちが出るわけじゃないが、うんちをする時は必ずおしっこが出る。",
+];
+
 export default function HeroSection() {
+  const [quote, setQuote] = React.useState(JAPANESE_QUOTES[0]);
+
+  React.useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * JAPANESE_QUOTES.length);
+    setQuote(JAPANESE_QUOTES[randomIndex]);
+  }, []);
   return (
     <section id="hero" className="relative min-h-[72vh] flex flex-col items-center justify-center overflow-hidden pt-12 pb-10">
       {/* Background pattern */}
@@ -43,8 +55,8 @@ export default function HeroSection() {
           <p className="text-base sm:text-lg text-[#4A2810] font-bold">
             ✿ Digital Illustrator ✿
           </p>
-          <p className="text-sm text-[#4A2810]/70 font-medium">
-            イラストレーター・コミッション受付中
+          <p className="text-sm text-[#4A2810]/70 font-medium min-h-[1.25rem] transition-opacity duration-300" suppressHydrationWarning>
+            {quote}
           </p>
         </div>
 
