@@ -9,57 +9,36 @@ export const metadata: Metadata = {
 
 const TOS_SECTIONS = [
   {
-    title: "🍎 General / Tổng quan",
+    title: "🍎 I. Về Commission",
     content: [
-      "Bằng việc đặt commission, bạn đồng ý với tất cả các điều khoản dưới đây.",
-      "Tôi có quyền từ chối bất kỳ commission nào mà không cần giải thích lý do.",
-      "Giá cả có thể thay đổi tùy theo mức độ phức tạp — sẽ thông báo trước khi bắt đầu.",
-      "Vui lòng cung cấp tài liệu tham khảo rõ ràng (reference) khi đặt commission.",
+      "CỌC 30% sau khi chốt slot - wl, THANH TOÁN full tiền comm sau khi nhận được sketch.",
+      "Quá 2 ngày không cọc = tự động huỷ slot.",
+      "Thêm character: +100% giá gốc.",
+      "Phương thức thanh toán: Bank / Momo (Vui lòng chụp bill lại sau khi thanh toán).",
+      "Deadline 4 tháng, có thể lâu hơn nếu xảy ra vấn đề phát sinh.",
+      "Phí sửa hoàn toàn miễn phí trước khi chốt sketch. Sửa sau sketch (line) và final sẽ tính thêm phí (hoặc không nếu lỗi nằm ở artist).",
+      "Không nhận vẽ: background, pose quá khó, người già, người thật, furry, mecha, mật độ chi tiết cao.",
+      "Phí details sẽ được thương lượng giữa artist và khách hàng.",
+      "Phí thương mại: ×3 | Private: ×1.5.",
     ],
   },
   {
-    title: "💰 Payment / Thanh toán",
+    title: "👤 II. Về Khách Hàng",
     content: [
-      "Thanh toán 100% trước khi bắt đầu vẽ.",
-      "Phương thức thanh toán: chuyển khoản ngân hàng / Momo / PayPal.",
-      "Không hoàn tiền sau khi đã bắt đầu sketch — trừ trường hợp tôi không thể hoàn thành.",
-      "Giá đã niêm yết trên trang Pricing. Phụ phí nếu có sẽ được thông báo rõ.",
+      "Gửi đầy đủ brief. Có thể tả nhưng vui lòng kèm hình ảnh chi tiết.",
+      "Nếu khách hàng gửi brief muộn hoặc sát deadline, artist có quyền thương lượng lại deadline (ít nhất 15 ngày).",
+      "Được phép trì hoãn tiền comm trong 1 tuần. Nếu quá 1 tuần, artist có quyền lên bài cân nhắc giao dịch.",
+      "Được phép sửa trực tiếp lên tranh, không cần hỏi lại artist.",
+      "Nếu hủy slot sau khi đã cọc, khách hàng sẽ mất toàn bộ tiền cọc.",
+      "🚫 NGHIÊM CẤM FEED CHO A.I.",
     ],
   },
   {
-    title: "🎨 Process / Quy trình",
+    title: "🎨 III. Về Artist",
     content: [
-      "Sau khi thanh toán, tôi sẽ gửi sketch để bạn xác nhận trước khi tiếp tục.",
-      "Bạn được chỉnh sửa lớn (major revision) 1 lần ở giai đoạn sketch.",
-      "Chỉnh sửa nhỏ (minor revision) miễn phí 2 lần ở giai đoạn hoàn thiện.",
-      "Chỉnh sửa bổ sung ngoài số lần cho phép sẽ tính phụ phí.",
-      "Thời gian hoàn thành: 3-7 ngày làm việc (có thể lâu hơn nếu queue đông).",
-    ],
-  },
-  {
-    title: "📋 Usage Rights / Quyền sử dụng",
-    content: [
-      "Bạn ĐƯỢC: sử dụng cá nhân, đăng lên social media (kèm credit), in ấn cho bản thân.",
-      "Bạn KHÔNG ĐƯỢC: tuyên bố là tác phẩm của mình, sử dụng cho mục đích thương mại (trừ khi đã thỏa thuận), bán lại, dùng cho AI training.",
-      "Tôi giữ quyền đăng tác phẩm lên portfolio và social media của mình.",
-      "Commercial use license có thể thỏa thuận riêng với phụ phí.",
-    ],
-  },
-  {
-    title: "✋ Will Draw / Won't Draw",
-    content: [
-      "✅ SẼ VẼ: OC, fanart, couple, group (phụ phí), light NSFW (tùy trường hợp), kemonomimi, mecha nhẹ.",
-      "❌ KHÔNG VẼ: NSFW nặng, hate art, nội dung chính trị, bạo lực quá mức, bất kỳ nội dung vi phạm pháp luật.",
-      "Nếu không chắc, hãy hỏi tôi trước khi đặt order nhé!",
-    ],
-  },
-  {
-    title: "🔄 Cancellation / Hủy đơn",
-    content: [
-      "Hủy đơn trước khi bắt đầu sketch → hoàn 100%.",
-      "Hủy sau khi đã nhận sketch → không hoàn tiền.",
-      "Nếu tôi hủy đơn vì lý do cá nhân → hoàn 100%.",
-      "Deadline bạn yêu cầu phải hợp lý, rush order sẽ tính phụ phí 30-50%.",
+      "Được phép mang tranh CMS làm sample trừ khi khách đã trả phí private.",
+      "Có quyền từ chối nếu đơn quá khả năng.",
+      "CMS nếu quá deadline nhưng vẫn chưa có sketch, sẽ phải refund 100% tiền cọc cho khách.",
     ],
   },
 ];
