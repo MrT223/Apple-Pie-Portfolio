@@ -171,9 +171,14 @@ export default function AdminPage() {
       // Resize & compress
       const compressedBlob = await resizeImageBeforeUpload(file, 1200);
 
+      const oldImageSrc = formData.gallery_images[targetIdx]?.src || "";
+
       const uploadForm = new FormData();
       uploadForm.append("file", compressedBlob, file.name);
       uploadForm.append("name", `sample-${targetIdx + 1}-${Date.now()}.jpg`);
+      if (oldImageSrc) {
+        uploadForm.append("oldUrl", oldImageSrc);
+      }
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",

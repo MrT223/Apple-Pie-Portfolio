@@ -4,6 +4,20 @@ import { getSupabaseClient, BUCKET_NAME } from "@/lib/supabase";
 import fs from "fs";
 import path from "path";
 
+function extractStoragePath(url: string | null | undefined, bucketName: string): string | null {
+  if (!url || typeof url !== "string") return null;
+  if (url.startsWith("data:") || url.startsWith("blob:")) return null;
+
+  const bucketMarker = `/storage/v1/object/public/${bucketName}/`;
+  const markerIdx = url.indexOf(bucketMarker);
+  if (markerIdx !== -1) {
+    const rawPath = url.slice(markerIdx + bucketMarker.length);
+    const cleanPath = rawPath.split("?")[0];
+    return decodeURIComponent(cleanPath);
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get("authorization");
@@ -19,6 +33,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const customName = formData.get("name") as string | null;
+    const oldUrl = formData.get("oldUrl") as string | null;
 
     if (!file) {
       return NextResponse.json(
@@ -48,6 +63,25 @@ export async function POST(req: NextRequest) {
             .from(BUCKET_NAME)
             .getPublicUrl(filename);
 
+          // Tự động xóa ảnh cũ trên Supabase Storage nếu có để giải phóng dung lượng
+          if (oldUrl) {
+            const oldPath = extractStoragePath(oldUrl, BUCKET_NAME);
+            if (oldPath && oldPath !== filename) {
+              try {
+                const { error: removeError } = await supabase.storage
+                  .from(BUCKET_NAME)
+                  .remove([oldPath]);
+                if (removeError) {
+                  console.warn("[Upload] Cảnh báo không thể xóa ảnh cũ:", removeError);
+                } else {
+                  console.log(`[Upload] Đã xóa ảnh cũ trên Supabase thành công: ${oldPath}`);
+                }
+              } catch (delErr) {
+                console.warn("[Upload] Lỗi xóa ảnh cũ:", delErr);
+              }
+            }
+          }
+
           return NextResponse.json({
             success: true,
             url: publicData.publicUrl,
@@ -70,6 +104,20 @@ export async function POST(req: NextRequest) {
 
       const filePath = path.join(uploadDir, filename);
       fs.writeFileSync(filePath, buffer);
+
+      // Tự động xóa file cũ local nếu có
+      if (oldUrl && oldUrl.startsWith("/uploads/")) {
+        const oldLocalName = oldUrl.replace("/uploads/", "");
+        const oldLocalPath = path.join(uploadDir, oldLocalName);
+        if (fs.existsSync(oldLocalPath) && oldLocalName !== filename) {
+          try {
+            fs.unlinkSync(oldLocalPath);
+            console.log(`[Upload] Đã xóa ảnh cũ local: ${oldLocalName}`);
+          } catch (e) {
+            console.warn("[Upload] Lỗi xóa ảnh cũ local:", e);
+          }
+        }
+      }
 
       return NextResponse.json({
         success: true,
