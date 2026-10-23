@@ -24,7 +24,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const fetchLatest = useCallback(async (currentLocalVersion?: string) => {
     try {
-      const res = await fetch("/api/settings");
+      const res = await fetch(`/api/settings?_t=${Date.now()}`, {
+        cache: "no-store",
+      });
       if (!res.ok) return;
       const data: SiteSettings = await res.json();
 
@@ -33,6 +35,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         await idbSet("site_settings", data);
         await idbSet("gallery_version", data.gallery_version || "1");
       }
+      return data;
     } catch (err) {
       console.warn("[Settings] Background fetch error:", err);
     }
@@ -71,6 +74,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setSettings((prev) => {
       const updated = { ...prev, ...newSettings };
       idbSet("site_settings", updated);
+      if (updated.gallery_version) {
+        idbSet("gallery_version", updated.gallery_version);
+      }
       return updated;
     });
   }, []);

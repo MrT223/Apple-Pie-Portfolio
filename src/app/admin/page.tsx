@@ -84,10 +84,26 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (settings) {
+    if (!token) return;
+    // Tải cấu hình mới nhất từ server mỗi khi đăng nhập admin studio
+    fetch(`/api/admin/settings?_t=${Date.now()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.gallery_images) {
+          setFormData(data);
+          updateSettings(data);
+        }
+      })
+      .catch((err) => console.warn("[Admin] Tải dữ liệu server thất bại:", err));
+  }, [token, updateSettings]);
+
+  useEffect(() => {
+    if (settings && !hasChanges) {
       setFormData(settings);
     }
-  }, [settings]);
+  }, [settings, hasChanges]);
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setNotification({ text, type });
@@ -206,8 +222,13 @@ export default function AdminPage() {
         throw new Error(data.message || "Lỗi lưu cấu hình");
       }
 
-      updateSettings(formData);
-      await refreshSettings();
+      const savedSettings = data.settings || {
+        ...formData,
+        gallery_version: data.version || Date.now().toString(),
+      };
+
+      updateSettings(savedSettings);
+      setFormData(savedSettings);
       setHasChanges(false);
       showToast("💾 Đã lưu và đồng bộ toàn bộ dữ liệu thành công!");
     } catch (err: unknown) {

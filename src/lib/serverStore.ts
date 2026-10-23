@@ -66,7 +66,7 @@ export async function getServerSettings(): Promise<SiteSettings> {
 
 export async function saveServerSettings(
   updated: Partial<SiteSettings>
-): Promise<{ success: boolean; version: string; error?: string }> {
+): Promise<{ success: boolean; version: string; error?: string; settings: SiteSettings }> {
   const current = await getServerSettings();
   const version = Date.now().toString();
   const nextSettings: SiteSettings = {
@@ -90,23 +90,25 @@ export async function saveServerSettings(
         { key: "gallery_version", value: version },
       ];
 
-      for (const entry of entries) {
-        // Upsert setting
-        await supabase
-          .from("admin_settings")
-          .upsert(entry, { onConflict: "key" });
+      // Upsert batch một lần duy nhất
+      const { error: upsertError } = await supabase
+        .from("admin_settings")
+        .upsert(entries, { onConflict: "key" });
+
+      if (upsertError) {
+        console.error("[ServerStore] Supabase batch upsert error:", upsertError);
       }
     } catch (err) {
       console.warn("[ServerStore] Supabase write failed, falling back to local file:", err);
     }
   }
 
-  // Always keep local file updated as fallback
+  // Luôn cập nhật file cache local dự phòng
   try {
     fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(nextSettings, null, 2), "utf-8");
   } catch (err) {
     console.warn("[ServerStore] Local file save warning:", err);
   }
 
-  return { success: true, version };
+  return { success: true, version, settings: nextSettings };
 }
