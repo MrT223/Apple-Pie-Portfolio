@@ -2,22 +2,10 @@
 
 import React, { useState } from "react";
 import { WobbleApple } from "./AppleAnimations";
+import { useSettings } from "@/lib/useSettings";
+import { PricingItem, YCHPricing } from "@/lib/defaultData";
 
 type PricingCategory = "normal" | "chibi" | "ych";
-
-const NORMAL_PRICES = [
-  { type: "Headshot", sketch: "120.000₫", line: "180.000₫", full: "380.000₫" },
-  { type: "Chest-up", sketch: "160.000₫", line: "230.000₫", full: "480.000₫" },
-  { type: "Half-body", sketch: "200.000₫", line: "300.000₫", full: "600.000₫" },
-  { type: "Knee-up", sketch: "250.000₫", line: "370.000₫", full: "750.000₫" },
-  { type: "Full-body", sketch: "330.000₫", line: "500.000₫", full: "1.000.000₫" },
-];
-
-const CHIBI_PRICES = [
-  { type: "Headshot", sketch: "80.000₫", line: "120.000₫", full: "180.000₫" },
-  { type: "Half-body", sketch: "120.000₫", line: "170.000₫", full: "300.000₫" },
-  { type: "Full-body", sketch: "150.000₫", line: "250.000₫", full: "500.000₫" },
-];
 
 const tabs: { key: PricingCategory; label: string; emoji: string }[] = [
   { key: "normal", label: "Normal Style", emoji: "🍎" },
@@ -26,7 +14,12 @@ const tabs: { key: PricingCategory; label: string; emoji: string }[] = [
 ];
 
 export default function PricingTable() {
+  const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState<PricingCategory>("normal");
+
+  const normalPrices = settings.pricing_normal;
+  const chibiPrices = settings.pricing_chibi;
+  const ychPricing = settings.pricing_ych;
 
   return (
     <div className="max-w-lg mx-auto">
@@ -56,20 +49,20 @@ export default function PricingTable() {
 
       {/* Pricing content */}
       <div className="animate-[fade-in-up_0.3s_ease-out_forwards]" key={activeTab}>
-        {activeTab === "normal" && <NormalPricingCards />}
-        {activeTab === "chibi" && <ChibiPricingCards />}
-        {activeTab === "ych" && <YCHPricingCard />}
+        {activeTab === "normal" && <NormalPricingCards prices={normalPrices} />}
+        {activeTab === "chibi" && <ChibiPricingCards prices={chibiPrices} />}
+        {activeTab === "ych" && <YCHPricingCard pricing={ychPricing} />}
       </div>
     </div>
   );
 }
 
-function NormalPricingCards() {
+function NormalPricingCards({ prices }: { prices: PricingItem[] }) {
   return (
     <div className="space-y-4 sm:space-y-5">
-      {NORMAL_PRICES.map((item, index) => (
+      {prices.map((item, index) => (
         <div
-          key={item.type}
+          key={item.type + index}
           className="bg-white rounded-3xl border-2 border-apple-red/15 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-300"
           style={{ animationDelay: `${index * 0.06}s` }}
         >
@@ -116,12 +109,12 @@ function NormalPricingCards() {
   );
 }
 
-function ChibiPricingCards() {
+function ChibiPricingCards({ prices }: { prices: PricingItem[] }) {
   return (
     <div className="space-y-4 sm:space-y-5">
-      {CHIBI_PRICES.map((item, index) => (
+      {prices.map((item, index) => (
         <div
-          key={item.type}
+          key={item.type + index}
           className="bg-white rounded-3xl border-2 border-leaf-green/25 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-300"
           style={{ animationDelay: `${index * 0.06}s` }}
         >
@@ -166,7 +159,7 @@ function ChibiPricingCards() {
   );
 }
 
-function YCHPricingCard() {
+function YCHPricingCard({ pricing }: { pricing: YCHPricing }) {
   return (
     <div className="bg-white rounded-3xl border-2 border-star-pink/40 p-6 sm:p-8 shadow-sm text-center">
       <div className="flex justify-center mb-5">
@@ -175,18 +168,26 @@ function YCHPricingCard() {
         </div>
       </div>
 
-      <h3 className="font-extrabold text-[#4A2810] text-xl sm:text-2xl mb-2 tracking-wide">Chibi YCH</h3>
-      <p className="text-[#4A2810]/70 text-sm sm:text-base mb-6 font-medium">Your Character Here — Pose có sẵn theo chủ đề quả táo</p>
+      <h3 className="font-extrabold text-[#4A2810] text-xl sm:text-2xl mb-2 tracking-wide">
+        {pricing.title}
+      </h3>
+      <p className="text-[#4A2810]/70 text-sm sm:text-base mb-6 font-medium">
+        {pricing.subtitle}
+      </p>
 
       <div className="inline-block bg-apple-red-50/80 border border-apple-red/20 rounded-3xl px-8 py-4 mb-6 shadow-xs">
-        <span className="text-3xl sm:text-4xl font-extrabold text-apple-red block mb-1">80.000₫</span>
-        <span className="text-[#4A2810]/75 text-sm font-semibold block">/ 1 nhân vật</span>
+        <span className="text-3xl sm:text-4xl font-extrabold text-apple-red block mb-1">
+          {pricing.price}
+        </span>
+        <span className="text-[#4A2810]/75 text-sm font-semibold block">
+          {pricing.unit}
+        </span>
       </div>
 
       <div className="bg-cream/80 border border-apple-red/10 rounded-2xl p-4 text-sm sm:text-base text-[#4A2810] font-medium leading-relaxed max-w-xs mx-auto">
         <p className="flex items-center justify-center gap-2">
           <span className="text-apple-red">✿</span>
-          Tính theo số lượng nhân vật trong khung tranh
+          {pricing.note}
           <span className="text-apple-red">✿</span>
         </p>
       </div>

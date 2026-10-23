@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSettings } from "@/lib/useSettings";
+import { ToSSection } from "@/lib/defaultData";
 
-interface ToSSection {
-  title: string;
-  content: string[];
-}
-
-export default function ToSAccordion({ sections }: { sections: ToSSection[] }) {
+export default function ToSAccordion({ sections: initialSections }: { sections?: ToSSection[] }) {
+  const { settings } = useSettings();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const sections = settings.tos_sections || initialSections || [];
 
   return (
     <div className="space-y-4">

@@ -3,6 +3,12 @@
 
 @import "tailwindcss";
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* ===== TAILWIND V4 THEME ===== */
 @theme {
   --color-apple-red: #C0392B;

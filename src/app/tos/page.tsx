@@ -7,42 +7,6 @@ export const metadata: Metadata = {
   description: "Commission Terms of Service. Please read before ordering. コミッションの利用規約",
 };
 
-const TOS_SECTIONS = [
-  {
-    title: "🍎 I. Về Commission",
-    content: [
-      "CỌC 30% sau khi chốt slot - wl, THANH TOÁN full tiền comm sau khi nhận được sketch.",
-      "Quá 2 ngày không cọc = tự động huỷ slot.",
-      "Thêm character: +100% giá gốc.",
-      "Phương thức thanh toán: Bank / Momo (Vui lòng chụp bill lại sau khi thanh toán).",
-      "Deadline 4 tháng, có thể lâu hơn nếu xảy ra vấn đề phát sinh.",
-      "Phí sửa hoàn toàn miễn phí trước khi chốt sketch. Sửa sau sketch (line) và final sẽ tính thêm phí (hoặc không nếu lỗi nằm ở artist).",
-      "Không nhận vẽ: background, pose quá khó, người già, người thật, furry, mecha, mật độ chi tiết cao.",
-      "Phí details sẽ được thương lượng giữa artist và khách hàng.",
-      "Phí thương mại: ×3 | Private: ×1.5.",
-    ],
-  },
-  {
-    title: "👤 II. Về Khách Hàng",
-    content: [
-      "Gửi đầy đủ brief. Có thể tả nhưng vui lòng kèm hình ảnh chi tiết.",
-      "Nếu khách hàng gửi brief muộn hoặc sát deadline, artist có quyền thương lượng lại deadline (ít nhất 15 ngày).",
-      "Được phép trì hoãn tiền comm trong 1 tuần. Nếu quá 1 tuần, artist có quyền lên bài cân nhắc giao dịch.",
-      "Được phép sửa trực tiếp lên tranh, không cần hỏi lại artist.",
-      "Nếu hủy slot sau khi đã cọc, khách hàng sẽ mất toàn bộ tiền cọc.",
-      "🚫 NGHIÊM CẤM FEED CHO A.I.",
-    ],
-  },
-  {
-    title: "🎨 III. Về Artist",
-    content: [
-      "Được phép mang tranh CMS làm sample trừ khi khách đã trả phí private.",
-      "Có quyền từ chối nếu đơn quá khả năng.",
-      "CMS nếu quá deadline nhưng vẫn chưa có sketch, sẽ phải refund 100% tiền cọc cho khách.",
-    ],
-  },
-];
-
 export default function ToSPage() {
   return (
     <div className="page-enter relative min-h-screen pb-16">
@@ -78,7 +42,7 @@ export default function ToSPage() {
       {/* Content */}
       <div className="relative px-4 sm:px-5 py-6">
         <DecorativeStars count={3} />
-        <ToSAccordion sections={TOS_SECTIONS} />
+        <ToSAccordion />
       </div>
 
       {/* Divider */}

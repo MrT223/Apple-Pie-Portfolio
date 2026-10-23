@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Navigation from "@/components/Navigation";
 import { FallingApples, FloatingLeaves } from "@/components/AppleAnimations";
+import { SettingsProvider } from "@/lib/useSettings";
+import AppShell from "@/components/AppShell";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -28,20 +29,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" data-scroll-behavior="smooth">
-      <body className="antialiased min-h-dvh bg-[#FAF4EB]">
+      <body className="antialiased min-h-dvh bg-[#FAF4EB] max-w-full overflow-x-hidden">
         {/* Global ambient animations in background */}
         <FallingApples count={12} />
         <FloatingLeaves count={8} />
 
-        {/* Centered mobile application container */}
-        <div className="relative z-10 min-h-screen w-full max-w-md mx-auto bg-[#FFFDF9] shadow-2xl border-x border-apple-red/10 flex flex-col">
-          <main className="relative z-10 flex-1 pb-24">
-            {children}
-          </main>
-
-          {/* Bottom navigation snapped to mobile frame */}
-          <Navigation />
-        </div>
+        <SettingsProvider>
+          <AppShell>{children}</AppShell>
+        </SettingsProvider>
       </body>
     </html>
   );
