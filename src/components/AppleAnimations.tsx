@@ -467,3 +467,158 @@ export function RibbonBanner({
     </div>
   );
 }
+
+/* ============================================
+   ⭐ ROTATING WHITE STARS — Background ambient decoration
+   ============================================ */
+export function RotatingStars() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const stars = [
+    // Band 1: Top Header & Corners (top: 2% - 14%)
+    { id: 1, left: "5%", top: "3%", size: 26, spinDuration: 14, floatDuration: 5.5, floatDelay: 0, dir: "cw", type: 0, opacity: 1 },
+    { id: 2, left: "22%", top: "5%", size: 18, spinDuration: 18, floatDuration: 6.2, floatDelay: 1.2, dir: "ccw", type: 2, opacity: 0.95 },
+    { id: 3, left: "38%", top: "2%", size: 22, spinDuration: 16, floatDuration: 5.0, floatDelay: 0.8, dir: "cw", type: 1, opacity: 0.95 },
+    { id: 4, right: "38%", top: "3%", size: 20, spinDuration: 15, floatDuration: 5.8, floatDelay: 2.1, dir: "ccw", type: 0, opacity: 1 },
+    { id: 5, right: "22%", top: "6%", size: 18, spinDuration: 19, floatDuration: 6.5, floatDelay: 1.5, dir: "cw", type: 2, opacity: 0.95 },
+    { id: 6, right: "5%", top: "4%", size: 28, spinDuration: 13, floatDuration: 5.2, floatDelay: 0.5, dir: "ccw", type: 1, opacity: 1 },
+    { id: 7, left: "12%", top: "10%", size: 22, spinDuration: 17, floatDuration: 5.6, floatDelay: 1.7, dir: "cw", type: 0, opacity: 0.95 },
+    { id: 8, right: "12%", top: "11%", size: 24, spinDuration: 21, floatDuration: 6.0, floatDelay: 0.9, dir: "ccw", type: 0, opacity: 1 },
+
+    // Band 2: Beside Avatar (top: 15% - 30%)
+    { id: 9, left: "4%", top: "17%", size: 30, spinDuration: 20, floatDuration: 6.4, floatDelay: 0.6, dir: "cw", type: 1, opacity: 1 },
+    { id: 10, left: "18%", top: "20%", size: 20, spinDuration: 12, floatDuration: 5.1, floatDelay: 1.4, dir: "ccw", type: 2, opacity: 0.95 },
+    { id: 11, right: "18%", top: "19%", size: 22, spinDuration: 16, floatDuration: 5.7, floatDelay: 2.3, dir: "cw", type: 0, opacity: 0.95 },
+    { id: 12, right: "4%", top: "18%", size: 28, spinDuration: 22, floatDuration: 6.8, floatDelay: 1.1, dir: "ccw", type: 1, opacity: 1 },
+    { id: 13, left: "8%", top: "26%", size: 24, spinDuration: 15, floatDuration: 5.3, floatDelay: 0.4, dir: "cw", type: 0, opacity: 0.95 },
+    { id: 14, right: "8%", top: "27%", size: 26, spinDuration: 14, floatDuration: 5.9, floatDelay: 1.8, dir: "ccw", type: 2, opacity: 0.95 },
+
+    // Band 3: Beside Artist Title & Subtitle (top: 31% - 48%)
+    { id: 15, left: "4%", top: "34%", size: 28, spinDuration: 18, floatDuration: 6.1, floatDelay: 0.7, dir: "ccw", type: 1, opacity: 1 },
+    { id: 16, left: "15%", top: "38%", size: 18, spinDuration: 13, floatDuration: 5.4, floatDelay: 2.0, dir: "cw", type: 0, opacity: 0.9 },
+    { id: 17, right: "15%", top: "36%", size: 20, spinDuration: 17, floatDuration: 5.8, floatDelay: 1.3, dir: "ccw", type: 2, opacity: 0.95 },
+    { id: 18, right: "4%", top: "35%", size: 30, spinDuration: 23, floatDuration: 6.6, floatDelay: 0.2, dir: "cw", type: 0, opacity: 1 },
+    { id: 19, left: "7%", top: "44%", size: 22, spinDuration: 16, floatDuration: 5.5, floatDelay: 1.9, dir: "ccw", type: 2, opacity: 0.95 },
+    { id: 20, right: "7%", top: "45%", size: 24, spinDuration: 19, floatDuration: 6.3, floatDelay: 0.5, dir: "cw", type: 1, opacity: 0.95 },
+
+    // Band 4: Beside Japanese Quote & Tags (top: 49% - 66%)
+    { id: 21, left: "4%", top: "52%", size: 30, spinDuration: 15, floatDuration: 5.2, floatDelay: 1.0, dir: "cw", type: 0, opacity: 1 },
+    { id: 22, left: "16%", top: "56%", size: 20, spinDuration: 21, floatDuration: 6.5, floatDelay: 2.4, dir: "ccw", type: 1, opacity: 0.95 },
+    { id: 23, right: "16%", top: "54%", size: 18, spinDuration: 14, floatDuration: 5.0, floatDelay: 0.8, dir: "cw", type: 0, opacity: 0.95 },
+    { id: 24, right: "4%", top: "53%", size: 28, spinDuration: 20, floatDuration: 6.7, floatDelay: 1.6, dir: "ccw", type: 2, opacity: 1 },
+    { id: 25, left: "8%", top: "62%", size: 24, spinDuration: 17, floatDuration: 5.6, floatDelay: 0.3, dir: "cw", type: 2, opacity: 0.95 },
+    { id: 26, right: "8%", top: "63%", size: 26, spinDuration: 13, floatDuration: 6.2, floatDelay: 1.5, dir: "ccw", type: 1, opacity: 0.95 },
+
+    // Band 5: Beside CTA Button (top: 67% - 80%)
+    { id: 27, left: "4%", top: "70%", size: 28, spinDuration: 22, floatDuration: 6.0, floatDelay: 2.2, dir: "ccw", type: 1, opacity: 1 },
+    { id: 28, left: "17%", top: "73%", size: 20, spinDuration: 16, floatDuration: 5.3, floatDelay: 0.7, dir: "cw", type: 0, opacity: 0.95 },
+    { id: 29, right: "17%", top: "72%", size: 22, spinDuration: 18, floatDuration: 5.7, floatDelay: 1.7, dir: "ccw", type: 2, opacity: 0.95 },
+    { id: 30, right: "4%", top: "71%", size: 30, spinDuration: 14, floatDuration: 6.4, floatDelay: 0.4, dir: "cw", type: 0, opacity: 1 },
+    { id: 31, left: "9%", top: "79%", size: 24, spinDuration: 19, floatDuration: 5.8, floatDelay: 1.3, dir: "cw", type: 0, opacity: 0.95 },
+    { id: 32, right: "9%", top: "78%", size: 26, spinDuration: 15, floatDuration: 6.1, floatDelay: 2.0, dir: "ccw", type: 1, opacity: 0.95 },
+
+    // Band 6: Lower Area Above Wave (top: 81% - 89%)
+    { id: 33, left: "6%", top: "85%", size: 26, spinDuration: 17, floatDuration: 5.5, floatDelay: 0.9, dir: "ccw", type: 2, opacity: 0.95 },
+    { id: 34, left: "22%", top: "87%", size: 20, spinDuration: 13, floatDuration: 5.9, floatDelay: 1.8, dir: "cw", type: 0, opacity: 0.9 },
+    { id: 35, right: "22%", top: "86%", size: 22, spinDuration: 16, floatDuration: 5.4, floatDelay: 0.6, dir: "ccw", type: 1, opacity: 0.95 },
+    { id: 36, right: "6%", top: "85%", size: 28, spinDuration: 20, floatDuration: 6.3, floatDelay: 1.5, dir: "cw", type: 0, opacity: 1 },
+  ];
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+      {stars.map((s) => (
+        <div
+          key={s.id}
+          className="absolute"
+          style={{
+            left: s.left,
+            right: s.right,
+            top: s.top,
+            width: `${s.size}px`,
+            height: `${s.size}px`,
+            opacity: s.opacity,
+            animation: `star-float ${s.floatDuration}s ease-in-out ${s.floatDelay}s infinite`,
+          }}
+        >
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={{
+              animation: `${s.dir === "cw" ? "spin-slow" : "spin-reverse"} ${s.spinDuration}s linear infinite`,
+              filter:
+                "drop-shadow(0 2px 8px rgba(192, 57, 43, 0.16)) drop-shadow(0 1px 3px rgba(74, 40, 16, 0.12)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))",
+            }}
+          >
+            {s.type === 0 && <StarFourPoint />}
+            {s.type === 1 && <StarEightPoint />}
+            {s.type === 2 && <StarFivePoint />}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ✦ 4-pointed curved anime twinkle star */
+function StarFourPoint() {
+  return (
+    <svg viewBox="0 0 60 60" fill="none" className="w-full h-full">
+      <path
+        d="M30 3 C30 18, 42 30, 57 30 C42 30, 30 42, 30 57 C30 42, 18 30, 3 30 C18 30, 30 18, 30 3 Z"
+        fill="#FFFFFF"
+        stroke="rgba(180, 140, 115, 0.45)"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <circle cx="30" cy="30" r="2.5" fill="#F8B4B4" />
+    </svg>
+  );
+}
+
+/* ✦ 8-pointed radiant sparkle star */
+function StarEightPoint() {
+  return (
+    <svg viewBox="0 0 60 60" fill="none" className="w-full h-full">
+      {/* 4 diagonal secondary points */}
+      <path
+        d="M30 13 C30 23, 37 30, 47 30 C37 30, 30 37, 30 47 C30 37, 23 30, 13 30 C23 30, 30 23, 30 13 Z"
+        transform="rotate(45 30 30)"
+        fill="#FFFFFF"
+        opacity="0.95"
+        stroke="rgba(180, 140, 115, 0.4)"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      {/* 4 main cardinal points */}
+      <path
+        d="M30 3 C30 18, 42 30, 57 30 C42 30, 30 42, 30 57 C30 42, 18 30, 3 30 C18 30, 30 18, 30 3 Z"
+        fill="#FFFFFF"
+        stroke="rgba(180, 140, 115, 0.5)"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <circle cx="30" cy="30" r="2.5" fill="#F8B4B4" />
+    </svg>
+  );
+}
+
+/* ★ Cute kawaii 5-pointed star */
+function StarFivePoint() {
+  return (
+    <svg viewBox="0 0 60 60" fill="none" className="w-full h-full">
+      <path
+        d="M30 5 L36.5 21.1 L53.8 22.3 L40.5 33.4 L44.7 50.2 L30 41 L15.3 50.2 L19.5 33.4 L6.2 22.3 L23.5 21.1 Z"
+        fill="#FFFFFF"
+        stroke="rgba(180, 140, 115, 0.45)"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <ellipse cx="27" cy="24" rx="2.5" ry="3.5" fill="#F8B4B4" opacity="0.6" />
+    </svg>
+  );
+}

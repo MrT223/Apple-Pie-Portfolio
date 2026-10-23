@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" data-scroll-behavior="smooth">
       <body className="antialiased min-h-dvh bg-[#FAF4EB]">
         {/* Global ambient animations in background */}
         <FallingApples count={12} />
@@ -35,7 +35,7 @@ export default function RootLayout({
 
         {/* Centered mobile application container */}
         <div className="relative z-10 min-h-screen w-full max-w-md mx-auto bg-[#FFFDF9] shadow-2xl border-x border-apple-red/10 flex flex-col">
-          <main className="flex-1 pb-24">
+          <main className="relative z-10 flex-1 pb-24">
             {children}
           </main>
 

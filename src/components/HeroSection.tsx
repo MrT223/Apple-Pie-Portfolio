@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { AppleBlossoms, HeartApple } from "./AppleAnimations";
+import { AppleBlossoms, HeartApple, RotatingStars } from "./AppleAnimations";
 
 const JAPANESE_QUOTES = [
   "天上天下唯我独尊",
@@ -21,6 +21,9 @@ export default function HeroSection() {
     <section id="hero" className="relative min-h-[72vh] flex flex-col items-center justify-center overflow-hidden pt-12 pb-10">
       {/* Background pattern */}
       <div className="absolute inset-0 plaid-bg opacity-30" />
+
+      {/* Rotating white stars in background */}
+      <RotatingStars />
 
       {/* Apple blossoms */}
       <AppleBlossoms count={12} />
@@ -90,15 +93,6 @@ export default function HeroSection() {
         </a>
       </div>
 
-      {/* Bottom wave decoration */}
-      <div className="absolute -bottom-px left-0 right-0 pointer-events-none">
-        <svg viewBox="0 0 400 30" className="w-full block" preserveAspectRatio="none">
-          <path
-            d="M0 30 L0 15 Q50 0 100 15 Q150 30 200 15 Q250 0 300 15 Q350 30 400 15 L400 30Z"
-            fill="#FFFDF9"
-          />
-        </svg>
-      </div>
     </section>
   );
 }

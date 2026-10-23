@@ -21,16 +21,6 @@ export default function PricingPage() {
           </h1>
           <p className="text-[#4A2810]/70 text-sm sm:text-base font-semibold">✿ 料金表 ✿</p>
         </div>
-
-        {/* Wave bottom */}
-        <div className="absolute -bottom-px left-0 right-0 pointer-events-none">
-          <svg viewBox="0 0 400 20" className="w-full block" preserveAspectRatio="none">
-            <path
-              d="M0 20 L0 10 Q100 0 200 10 Q300 20 400 10 L400 20Z"
-              fill="#FFFDF9"
-            />
-          </svg>
-        </div>
       </header>
 
       {/* Apple peel side decoration (desktop) */}
@@ -41,8 +31,17 @@ export default function PricingPage() {
         <ApplePeel animate />
       </div>
 
-      {/* Main content */}
-      <div className="relative px-4 sm:px-5 py-6">
+      {/* Unified White Surface Layer (Wave top + White background below on same layer) */}
+      <div className="relative bg-[#FFFDF9] z-10 px-4 sm:px-5 py-6">
+        {/* Wave contour at the top of the white surface */}
+        <div className="absolute -top-[19px] left-0 right-0 pointer-events-none">
+          <svg viewBox="0 0 400 20" className="w-full block" preserveAspectRatio="none">
+            <path
+              d="M0 20 L0 10 Q100 0 200 10 Q300 20 400 10 L400 20Z"
+              fill="#FFFDF9"
+            />
+          </svg>
+        </div>
         <DecorativeStars count={4} />
         <PricingTable />
       </div>
