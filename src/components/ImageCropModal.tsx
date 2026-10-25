@@ -27,8 +27,19 @@ export default function ImageCropModal({
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Viewport tracking for mobile, iPad, and desktop responsiveness
+  const [viewportSize, setViewportSize] = useState<{ width: number; height: number }>({
+    width: typeof window !== "undefined" ? window.innerWidth : 400,
+    height: typeof window !== "undefined" ? window.innerHeight : 700,
+  });
+
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+
+  // Pointer & multi-touch pinch tracking for mobile/iPad
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const initialPinchDistRef = useRef<number | null>(null);
+  const initialPinchZoomRef = useRef<number>(1);
 
   // Load image object URL
   useEffect(() => {
@@ -39,6 +50,32 @@ export default function ImageCropModal({
     };
   }, [file]);
 
+  // Window resize listener to keep crop box dynamically sized
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Compute dynamic responsive crop box maintaining STRICT aspect ratio
+  // Screen width minus modal paddings (p-2 on mobile = 16px, inner p-3 = 24px, safety ~56px)
+  const maxAvailableW = Math.max(180, Math.min(viewportSize.width - 48, 540));
+  // Screen height minus modal header (~54px) + zoom controls (~50px) + footer (~56px) + safe margin (~230px)
+  const maxAvailableH = Math.max(160, Math.min(viewportSize.height - 240, 360));
+
+  let cropBoxWidth = maxAvailableW;
+  let cropBoxHeight = Math.round(cropBoxWidth / aspectRatio);
+
+  if (cropBoxHeight > maxAvailableH) {
+    cropBoxHeight = maxAvailableH;
+    cropBoxWidth = Math.round(cropBoxHeight * aspectRatio);
+  }
+
   // Handle image load to get natural dimensions and initial fit
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
@@ -47,13 +84,11 @@ export default function ImageCropModal({
     setOffset({ x: 0, y: 0 });
   };
 
-  // Viewport dimensions for the crop frame based on aspect ratio
-  const cropBoxHeight = 320;
-  const cropBoxWidth = Math.round(cropBoxHeight * aspectRatio);
-
-  // Compute base cover scale and limits
+  // Compute base cover scale and limits based on current active crop box
   const getRenderMetrics = useCallback(() => {
-    if (!naturalSize) return { scale: 1, baseW: cropBoxWidth, baseH: cropBoxHeight, maxPanX: 0, maxPanY: 0 };
+    if (!naturalSize) {
+      return { scale: 1, baseW: cropBoxWidth, baseH: cropBoxHeight, maxPanX: 0, maxPanY: 0 };
+    }
 
     // Scale required to cover the crop box completely at zoom = 1
     const scaleCover = Math.max(cropBoxWidth / naturalSize.width, cropBoxHeight / naturalSize.height);
@@ -74,47 +109,107 @@ export default function ImageCropModal({
     };
   }, [naturalSize, cropBoxWidth, cropBoxHeight, zoom]);
 
-  // Mouse / Touch handlers for panning
-  const handlePointerDown = (e: React.PointerEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y });
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
+  // Keep offset clamped within bounds whenever crop box dimensions or image metrics change
+  useEffect(() => {
+    if (!naturalSize) return;
     const { maxPanX, maxPanY } = getRenderMetrics();
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
+    setOffset((prev) => ({
+      x: Math.max(-maxPanX, Math.min(maxPanX, prev.x)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, prev.y)),
+    }));
+  }, [cropBoxWidth, cropBoxHeight, naturalSize, getRenderMetrics]);
 
-    setOffset({
-      x: Math.max(-maxPanX, Math.min(maxPanX, newX)),
-      y: Math.max(-maxPanY, Math.min(maxPanY, newY)),
-    });
+  // Zoom handler with offset re-clamping
+  const handleZoomChange = useCallback(
+    (newZoom: number) => {
+      const clampedZoom = Math.max(1, Math.min(3, newZoom));
+      setZoom(clampedZoom);
+
+      if (naturalSize) {
+        const scaleCover = Math.max(cropBoxWidth / naturalSize.width, cropBoxHeight / naturalSize.height);
+        const nextScale = scaleCover * clampedZoom;
+        const nextW = naturalSize.width * nextScale;
+        const nextH = naturalSize.height * nextScale;
+        const maxPanX = Math.max(0, (nextW - cropBoxWidth) / 2);
+        const maxPanY = Math.max(0, (nextH - cropBoxHeight) / 2);
+
+        setOffset((prev) => ({
+          x: Math.max(-maxPanX, Math.min(maxPanX, prev.x)),
+          y: Math.max(-maxPanY, Math.min(maxPanY, prev.y)),
+        }));
+      }
+    },
+    [naturalSize, cropBoxWidth, cropBoxHeight]
+  );
+
+  // Pointer & Multi-touch Handlers for smooth drag & pinch-to-zoom on Mobile / iPad / Desktop
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore if setPointerCapture fails on some browsers
+    }
+
+    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (activePointersRef.current.size === 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y });
+      initialPinchDistRef.current = null;
+    } else if (activePointersRef.current.size === 2) {
+      // Start 2-finger pinch gesture
+      setIsDragging(false);
+      const pts = Array.from(activePointersRef.current.values());
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      initialPinchDistRef.current = dist;
+      initialPinchZoomRef.current = zoom;
+    }
   };
 
-  const handlePointerUp = () => {
-    setIsDragging(false);
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!activePointersRef.current.has(e.pointerId)) return;
+    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Handle 2-finger pinch to zoom on Mobile / iPad
+    if (activePointersRef.current.size === 2 && initialPinchDistRef.current) {
+      const pts = Array.from(activePointersRef.current.values());
+      const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (currentDist > 0 && initialPinchDistRef.current > 0) {
+        const factor = currentDist / initialPinchDistRef.current;
+        const targetZoom = initialPinchZoomRef.current * factor;
+        handleZoomChange(targetZoom);
+      }
+      return;
+    }
+
+    // Handle single finger / mouse panning
+    if (activePointersRef.current.size === 1 && isDragging) {
+      const { maxPanX, maxPanY } = getRenderMetrics();
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
+
+      setOffset({
+        x: Math.max(-maxPanX, Math.min(maxPanX, newX)),
+        y: Math.max(-maxPanY, Math.min(maxPanY, newY)),
+      });
+    }
   };
 
-  // Zoom slider change
-  const handleZoomChange = (newZoom: number) => {
-    const clampedZoom = Math.max(1, Math.min(3, newZoom));
-    setZoom(clampedZoom);
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    activePointersRef.current.delete(e.pointerId);
 
-    // Re-clamp offset with new zoom
-    if (naturalSize) {
-      const scaleCover = Math.max(cropBoxWidth / naturalSize.width, cropBoxHeight / naturalSize.height);
-      const nextScale = scaleCover * clampedZoom;
-      const nextW = naturalSize.width * nextScale;
-      const nextH = naturalSize.height * nextScale;
-      const maxPanX = Math.max(0, (nextW - cropBoxWidth) / 2);
-      const maxPanY = Math.max(0, (nextH - cropBoxHeight) / 2);
+    if (activePointersRef.current.size < 2) {
+      initialPinchDistRef.current = null;
+    }
 
-      setOffset((prev) => ({
-        x: Math.max(-maxPanX, Math.min(maxPanX, prev.x)),
-        y: Math.max(-maxPanY, Math.min(maxPanY, prev.y)),
-      }));
+    if (activePointersRef.current.size === 1) {
+      // Seamlessly transition back to 1-finger panning
+      const remaining = Array.from(activePointersRef.current.values())[0];
+      setIsDragging(true);
+      setDragStart({ x: remaining.x - offset.x, y: remaining.y - offset.y });
+    } else if (activePointersRef.current.size === 0) {
+      setIsDragging(false);
     }
   };
 
@@ -227,21 +322,19 @@ export default function ImageCropModal({
   const { baseW, baseH } = getRenderMetrics();
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-[#FAF4EB] border-3 border-apple-red/25 rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col my-auto animate-[bounce-in_0.3s_ease-out_forwards]">
+    <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-[#FAF4EB] border-3 border-apple-red/25 rounded-2xl sm:rounded-3xl max-w-xl w-full max-h-[96vh] shadow-2xl overflow-hidden flex flex-col my-auto animate-[bounce-in_0.3s_ease-out_forwards]">
         {/* Header */}
-        <div className="px-5 py-4 bg-white border-b-2 border-apple-red/15 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="text-2xl">✂️</span>
-            <div>
-              <h3 className="font-extrabold text-[#4A2810] text-base sm:text-lg flex items-center gap-2">
-                <span>Cắt Khung Ảnh:</span>
-                <span className="text-apple-red font-bold text-sm sm:text-base">
-                  {slotName}
-                </span>
+        <div className="px-3.5 sm:px-5 py-3 sm:py-4 bg-white border-b-2 border-apple-red/15 flex items-center justify-between gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xl sm:text-2xl flex-shrink-0">✂️</span>
+            <div className="min-w-0">
+              <h3 className="font-extrabold text-[#4A2810] text-sm sm:text-base flex items-center gap-1.5 truncate">
+                <span>Cắt ảnh:</span>
+                <span className="text-apple-red font-bold truncate">{slotName}</span>
               </h3>
-              <p className="text-[11px] sm:text-xs text-[#4A2810]/70">
-                Tỉ lệ chuẩn: <span className="font-extrabold text-[#4A2810]">{slotIndex === 0 ? "16:10 (Chữ nhật ngang)" : "3:4 (Chữ nhật dọc)"}</span>. Ảnh gốc nguyên bản vẫn được lưu trọn vẹn để phóng to.
+              <p className="text-[10px] sm:text-xs text-[#4A2810]/70 truncate">
+                Tỉ lệ chuẩn: <span className="font-extrabold text-[#4A2810]">{slotIndex === 0 ? "16:10 (Bìa ngang)" : "3:4 (Tranh dọc)"}</span> • Ảnh gốc vẫn giữ trọn vẹn
               </p>
             </div>
           </div>
@@ -249,27 +342,28 @@ export default function ImageCropModal({
             type="button"
             onClick={onCancel}
             disabled={isProcessing}
-            className="w-8 h-8 rounded-full bg-apple-red-50 text-apple-red hover:bg-apple-red hover:text-white flex items-center justify-center font-bold text-sm transition-colors cursor-pointer"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-apple-red-50 text-apple-red hover:bg-apple-red hover:text-white flex items-center justify-center font-bold text-xs sm:text-sm transition-colors cursor-pointer flex-shrink-0"
+            title="Đóng"
           >
             ✕
           </button>
         </div>
 
-        {/* Cropper Viewport */}
-        <div className="p-4 sm:p-6 flex flex-col items-center">
+        {/* Cropper Viewport Area */}
+        <div className="p-3 sm:p-5 flex flex-col items-center flex-1 justify-center overflow-hidden">
           <div
             ref={containerRef}
-            className="relative bg-[#2D1B10] rounded-2xl overflow-hidden shadow-inner flex items-center justify-center select-none"
+            className="relative bg-[#2D1B10] rounded-2xl overflow-hidden shadow-inner flex items-center justify-center select-none touch-none cursor-grab active:cursor-grabbing flex-shrink-0"
             style={{
-              width: cropBoxWidth,
-              height: cropBoxHeight,
-              maxWidth: "100%",
+              width: `${cropBoxWidth}px`,
+              height: `${cropBoxHeight}px`,
+              touchAction: "none",
             }}
             onWheel={handleWheel}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
+            onPointerCancel={handlePointerUp}
           >
             {/* Image being dragged/panned */}
             {imageSrc && (
@@ -281,10 +375,9 @@ export default function ImageCropModal({
                 draggable={false}
                 className="absolute pointer-events-none select-none max-w-none transition-none"
                 style={{
-                  width: baseW,
-                  height: baseH,
+                  width: `${baseW}px`,
+                  height: `${baseH}px`,
                   transform: `translate(${offset.x}px, ${offset.y}px)`,
-                  cursor: isDragging ? "grabbing" : "grab",
                 }}
               />
             )}
@@ -299,25 +392,26 @@ export default function ImageCropModal({
               <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white/35 border-l border-dashed border-white/40" />
 
               {/* Aspect ratio badge */}
-              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md backdrop-blur-xs">
+              <div className="absolute bottom-2 right-2 bg-black/75 text-white text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-md backdrop-blur-xs shadow-xs">
                 {slotIndex === 0 ? "16:10" : "3:4"}
               </div>
             </div>
 
             {/* Hint drag */}
-            <div className="absolute top-2 left-2 bg-black/60 text-white/90 text-[10px] font-semibold px-2 py-1 rounded-md pointer-events-none backdrop-blur-xs flex items-center gap-1.5">
+            <div className="absolute top-2 left-2 bg-black/65 text-white/95 text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-md pointer-events-none backdrop-blur-xs flex items-center gap-1 shadow-xs">
               <span>✋</span>
-              <span>Kéo để căn góc đẹp</span>
+              <span className="hidden sm:inline">Kéo để căn góc • Con lăn để zoom</span>
+              <span className="sm:hidden">Kéo để căn góc • 2 ngón tay thu phóng</span>
             </div>
           </div>
 
           {/* Controls: Zoom & Re-center */}
-          <div className="mt-4 w-full max-w-md bg-white rounded-2xl p-3 border border-apple-red/15 flex items-center justify-between gap-3 shadow-xs">
-            <div className="flex items-center gap-2 flex-1">
+          <div className="mt-3 w-full max-w-sm sm:max-w-md bg-white rounded-2xl p-2.5 sm:p-3 border border-apple-red/15 flex items-center justify-between gap-2 shadow-xs flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-1">
               <button
                 type="button"
-                onClick={() => handleZoomChange(zoom - 0.2)}
-                className="w-8 h-8 rounded-xl bg-apple-red-50 text-apple-red hover:bg-apple-red hover:text-white flex items-center justify-center font-bold text-sm transition-colors cursor-pointer"
+                onClick={() => handleZoomChange(zoom - 0.15)}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-apple-red-50 text-apple-red hover:bg-apple-red hover:text-white flex items-center justify-center font-bold text-sm transition-colors cursor-pointer flex-shrink-0 active:scale-95"
                 title="Thu nhỏ"
               >
                 -
@@ -330,19 +424,19 @@ export default function ImageCropModal({
                 step="0.05"
                 value={zoom}
                 onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
-                className="flex-1 accent-apple-red cursor-pointer"
+                className="flex-1 accent-apple-red cursor-pointer h-2"
               />
 
               <button
                 type="button"
-                onClick={() => handleZoomChange(zoom + 0.2)}
-                className="w-8 h-8 rounded-xl bg-apple-red-50 text-apple-red hover:bg-apple-red hover:text-white flex items-center justify-center font-bold text-sm transition-colors cursor-pointer"
+                onClick={() => handleZoomChange(zoom + 0.15)}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-apple-red-50 text-apple-red hover:bg-apple-red hover:text-white flex items-center justify-center font-bold text-sm transition-colors cursor-pointer flex-shrink-0 active:scale-95"
                 title="Phóng to"
               >
                 +
               </button>
 
-              <span className="text-[11px] font-bold text-[#4A2810]/70 w-10 text-right">
+              <span className="text-[10px] sm:text-[11px] font-bold text-[#4A2810]/70 w-8 sm:w-9 text-right tabular-nums">
                 {Math.round(zoom * 100)}%
               </span>
             </div>
@@ -350,22 +444,22 @@ export default function ImageCropModal({
             <button
               type="button"
               onClick={handleResetCenter}
-              className="px-2.5 py-1.5 rounded-xl border border-apple-red/20 text-[#4A2810] hover:bg-apple-red-50 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0"
+              className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border border-apple-red/20 text-[#4A2810] hover:bg-apple-red-50 text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0 active:scale-95"
               title="Đặt lại vị trí giữa"
             >
               <span>🎯</span>
-              <span>Căn giữa</span>
+              <span className="hidden xs:inline">Căn giữa</span>
             </button>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="px-5 py-4 bg-white border-t border-apple-red/15 flex items-center justify-between gap-3">
+        <div className="px-3.5 sm:px-5 py-3 sm:py-4 bg-white border-t border-apple-red/15 flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0">
           <button
             type="button"
             onClick={onCancel}
             disabled={isProcessing}
-            className="px-4 py-2.5 rounded-xl border border-apple-red/20 text-[#4A2810] text-xs sm:text-sm font-bold hover:bg-apple-red-50 transition-colors cursor-pointer disabled:opacity-50"
+            className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-apple-red/20 text-[#4A2810] text-xs sm:text-sm font-bold hover:bg-apple-red-50 transition-colors cursor-pointer disabled:opacity-50"
           >
             Hủy bỏ
           </button>
@@ -374,12 +468,12 @@ export default function ImageCropModal({
             type="button"
             onClick={handleConfirmCrop}
             disabled={isProcessing}
-            className="px-5 py-2.5 bg-apple-red text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-md shadow-apple-red/30 hover:bg-apple-red-dark active:scale-95 transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+            className="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 bg-apple-red text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-md shadow-apple-red/30 hover:bg-apple-red-dark active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
             {isProcessing ? (
               <>
                 <span className="animate-spin text-sm">⏳</span>
-                <span>Đang xử lý & lưu ảnh...</span>
+                <span>Đang xử lý...</span>
               </>
             ) : (
               <>
