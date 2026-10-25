@@ -29,7 +29,7 @@ export default function PricingNotesSection() {
         {/* CTA */}
         <div className="mt-8 text-center">
           <a
-            href={settings.contact_facebook || "https://www.facebook.com/p/%C4%90inh-H%C6%B0%C6%A1ng-61591273319002/"}
+            href="https://www.facebook.com/p/%C4%90inh-H%C6%B0%C6%A1ng-61591273319002/"
             target="_blank"
             rel="noopener noreferrer"
             id="pricing-order-cta"
