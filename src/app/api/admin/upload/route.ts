@@ -45,9 +45,21 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = customName || `artwork-${Date.now()}.${ext}`;
-    const thumbFilename = filename.replace(new RegExp(`\\.${ext}$`), `-thumb.${ext}`);
+    
+    // Đảm bảo đuôi file hợp lệ
+    let fileExt = (file.name && file.name.includes("."))
+      ? file.name.split(".").pop()?.toLowerCase() || "jpg"
+      : "jpg";
+    if (fileExt === "jpeg") fileExt = "jpg";
+
+    // Tách baseName rõ ràng, tách biệt hoàn toàn giữa ảnh full và ảnh thumb
+    let baseName = `artwork-${Date.now()}`;
+    if (customName) {
+      baseName = customName.replace(/\.[^/.]+$/, ""); // Bỏ đuôi file nếu có
+    }
+
+    const filename = `${baseName}.${fileExt}`;
+    const thumbFilename = `${baseName}-thumb.${fileExt}`;
 
     const thumbBuffer = thumbFile ? Buffer.from(await thumbFile.arrayBuffer()) : null;
 

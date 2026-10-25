@@ -83,6 +83,7 @@ export default function AdminPage() {
     slotName: string;
     aspectRatio: number;
   } | null>(null);
+  const [previewFullUrl, setPreviewFullUrl] = useState<string | null>(null);
   const [notification, setNotification] = useState<{
     type: "success" | "error";
     text: string;
@@ -259,7 +260,7 @@ export default function AdminPage() {
           const uploadForm = new FormData();
           uploadForm.append("file", item.fullBlob, item.fileName);
           uploadForm.append("thumbFile", item.thumbBlob, `thumb-${item.fileName}`);
-          uploadForm.append("name", `sample-${idx + 1}-${Date.now()}.jpg`);
+          uploadForm.append("name", `sample-${idx + 1}-${Date.now()}`);
           if (oldImageSrc && !oldImageSrc.startsWith("blob:") && !oldImageSrc.startsWith("data:")) {
             uploadForm.append("oldUrl", oldImageSrc);
           }
@@ -698,17 +699,16 @@ export default function AdminPage() {
                             </div>
                           )}
 
-                          {img.src && !img.src.startsWith("data:") && (
-                            <a
-                              href={img.src}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[11px] font-bold text-[#4A2810]/70 hover:text-apple-red transition-colors flex items-center gap-1 mt-0.5"
-                              title="Xem ảnh full gốc đầy đủ trong tab mới"
+                          {img.src && (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewFullUrl(img.src)}
+                              className="text-[11px] font-bold text-apple-red hover:underline flex items-center gap-1 mt-0.5 cursor-pointer"
+                              title="Bấm để xem ảnh full gốc không bị cắt"
                             >
                               <span>🔍</span>
-                              <span>Xem ảnh full</span>
-                            </a>
+                              <span>Xem ảnh full gốc</span>
+                            </button>
                           )}
                         </div>
 
@@ -1402,6 +1402,36 @@ export default function AdminPage() {
             currentUploadTargetRef.current = null;
           }}
         />
+      )}
+
+      {/* Modal Xem Ảnh Full Gốc trong Admin */}
+      {previewFullUrl && (
+        <div
+          className="fixed inset-0 z-[150] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 cursor-pointer animate-[fade-in_0.2s_ease-out]"
+          onClick={() => setPreviewFullUrl(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[92vh] flex flex-col items-center cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-white/15 text-white text-xs sm:text-sm font-extrabold px-4 py-1.5 rounded-full mb-3 flex items-center gap-2 backdrop-blur-md shadow-md">
+              <span>🖼️</span>
+              <span>Ảnh Gốc Đầy Đủ (Không Bị Cắt)</span>
+            </div>
+            <img
+              src={previewFullUrl}
+              alt="Full uncropped preview"
+              className="max-w-full max-h-[78vh] object-contain rounded-2xl shadow-2xl border-2 border-white/20"
+            />
+            <button
+              type="button"
+              onClick={() => setPreviewFullUrl(null)}
+              className="mt-3 px-6 py-2 bg-white/20 hover:bg-white/30 text-white font-bold text-xs sm:text-sm rounded-full cursor-pointer transition-colors backdrop-blur-xs"
+            >
+              ✕ Đóng xem ảnh
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

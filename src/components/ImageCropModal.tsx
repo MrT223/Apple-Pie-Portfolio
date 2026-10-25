@@ -278,37 +278,40 @@ export default function ImageCropModal({
         );
       });
 
-      // 2. Generate Full Uncropped Image Blob (Resized max 1920px for optimal loading)
-      const maxDimension = 1920;
-      let fullW = naturalSize.width;
-      let fullH = naturalSize.height;
-      if (fullW > maxDimension || fullH > maxDimension) {
-        if (fullW > fullH) {
-          fullH = Math.round((maxDimension / fullW) * fullH);
-          fullW = maxDimension;
-        } else {
-          fullW = Math.round((maxDimension / fullH) * fullW);
-          fullH = maxDimension;
+      // 2. Full uncropped original image (Giữ 100% bố cục gốc nguyên bản)
+      let fullBlob: Blob = file;
+      if (file.size > 3.5 * 1024 * 1024) {
+        const maxDimension = 2048;
+        let fullW = naturalSize.width;
+        let fullH = naturalSize.height;
+        if (fullW > maxDimension || fullH > maxDimension) {
+          if (fullW > fullH) {
+            fullH = Math.round((maxDimension / fullW) * fullH);
+            fullW = maxDimension;
+          } else {
+            fullW = Math.round((maxDimension / fullH) * fullW);
+            fullH = maxDimension;
+          }
+        }
+
+        const fullCanvas = document.createElement("canvas");
+        fullCanvas.width = fullW;
+        fullCanvas.height = fullH;
+        const fullCtx = fullCanvas.getContext("2d");
+
+        if (fullCtx && imageRef.current) {
+          fullCtx.imageSmoothingEnabled = true;
+          fullCtx.imageSmoothingQuality = "high";
+          fullCtx.drawImage(imageRef.current, 0, 0, fullW, fullH);
+          fullBlob = await new Promise((resolve) => {
+            fullCanvas.toBlob(
+              (b) => resolve(b || file),
+              "image/jpeg",
+              0.9
+            );
+          });
         }
       }
-
-      const fullCanvas = document.createElement("canvas");
-      fullCanvas.width = fullW;
-      fullCanvas.height = fullH;
-      const fullCtx = fullCanvas.getContext("2d");
-
-      if (!fullCtx) throw new Error("Không thể khởi tạo Canvas context cho ảnh full");
-      fullCtx.imageSmoothingEnabled = true;
-      fullCtx.imageSmoothingQuality = "high";
-      fullCtx.drawImage(imageRef.current, 0, 0, fullW, fullH);
-
-      const fullBlob: Blob = await new Promise((resolve, reject) => {
-        fullCanvas.toBlob(
-          (b) => (b ? resolve(b) : reject(new Error("Xuất blob ảnh full thất bại"))),
-          "image/jpeg",
-          0.88
-        );
-      });
 
       onConfirm({ fullBlob, thumbBlob });
     } catch (err) {
