@@ -50,6 +50,13 @@ async function resizeImageBeforeUpload(file: File, maxW = 1200): Promise<Blob> {
   });
 }
 
+interface PendingImageUpload {
+  slotIndex: number;
+  fullBlob: Blob;
+  thumbBlob: Blob;
+  fileName: string;
+}
+
 export default function AdminPage() {
   const { settings, updateSettings, refreshSettings } = useSettings();
 
@@ -66,8 +73,10 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("gallery");
   const [formData, setFormData] = useState<SiteSettings>(settings);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveProgressText, setSaveProgressText] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [pendingUploads, setPendingUploads] = useState<Record<number, PendingImageUpload>>({});
   const [cropState, setCropState] = useState<{
     file: File;
     slotIndex: number;
@@ -186,7 +195,8 @@ export default function AdminPage() {
   };
 
   // Xử lý sau khi artist đã căn góc và xác nhận cắt ảnh
-  const handleCropConfirm = async ({
+  // QUAN TRỌNG: Lưu tạm tại trình duyệt dưới dạng Object URL, KHÔNG tải ngay lên Supabase để tránh lãng phí dung lượng!
+  const handleCropConfirm = ({
     fullBlob,
     thumbBlob,
   }: {
@@ -197,64 +207,100 @@ export default function AdminPage() {
     const targetIdx = cropState.slotIndex;
     const file = cropState.file;
     setCropState(null);
-    setUploadingIndex(targetIdx);
 
-    try {
-      const oldImageSrc = formData.gallery_images[targetIdx]?.src || "";
-      const oldThumbSrc = formData.gallery_images[targetIdx]?.thumb || "";
+    // Tạo Object URL preview tạm thời tại trình duyệt (chưa hề gửi lên Supabase)
+    const previewFullUrl = URL.createObjectURL(fullBlob);
+    const previewThumbUrl = URL.createObjectURL(thumbBlob);
 
-      const uploadForm = new FormData();
-      uploadForm.append("file", fullBlob, file.name);
-      uploadForm.append("thumbFile", thumbBlob, `thumb-${file.name}`);
-      uploadForm.append("name", `sample-${targetIdx + 1}-${Date.now()}.jpg`);
-      if (oldImageSrc) {
-        uploadForm.append("oldUrl", oldImageSrc);
-      }
-      if (oldThumbSrc) {
-        uploadForm.append("oldThumbUrl", oldThumbSrc);
-      }
+    // Lưu vào danh sách chờ tải lên (chỉ tải lên Supabase khi bấm "Lưu Tất Cả Thay Đổi")
+    setPendingUploads((prev) => ({
+      ...prev,
+      [targetIdx]: {
+        slotIndex: targetIdx,
+        fullBlob,
+        thumbBlob,
+        fileName: file.name,
+      },
+    }));
 
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: uploadForm,
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "Tải ảnh lên thất bại");
-      }
-
-      const updatedGallery = [...formData.gallery_images];
-      updatedGallery[targetIdx] = {
-        ...updatedGallery[targetIdx],
-        src: data.url,
-        thumb: data.thumbUrl || data.url,
-      };
-      setFormData({ ...formData, gallery_images: updatedGallery });
-      setHasChanges(true);
-      showToast(`Đã cắt & cập nhật ảnh mẫu #${targetIdx + 1}! Bấm 'Lưu Thay Đổi' để hoàn tất.`);
-    } catch (err: unknown) {
-      console.error(err);
-      showToast(err instanceof Error ? err.message : "Lỗi upload ảnh", "error");
-    } finally {
-      setUploadingIndex(null);
-      currentUploadTargetRef.current = null;
-    }
+    const updatedGallery = [...formData.gallery_images];
+    updatedGallery[targetIdx] = {
+      ...updatedGallery[targetIdx],
+      src: previewFullUrl,
+      thumb: previewThumbUrl,
+    };
+    setFormData({ ...formData, gallery_images: updatedGallery });
+    setHasChanges(true);
+    showToast(`Đã cắt xong ảnh #${targetIdx + 1} (Lưu tạm). Bấm 'Lưu Tất Cả Thay Đổi' để tải lên máy chủ!`);
+    currentUploadTargetRef.current = null;
   };
 
-  // Save all settings to Database & local store
+  // Lưu toàn bộ cấu hình vào Database & CHỈ tải ảnh lên Supabase khi đã bấm nút này
   const handleSaveAll = async () => {
     setIsSaving(true);
     setNotification(null);
+
     try {
+      const finalGalleryImages = [...formData.gallery_images];
+      const pendingIndices = Object.keys(pendingUploads).map(Number);
+
+      // Nếu có ảnh đang lưu tạm chờ upload lên Supabase
+      if (pendingIndices.length > 0) {
+        for (let i = 0; i < pendingIndices.length; i++) {
+          const idx = pendingIndices[i];
+          const item = pendingUploads[idx];
+
+          setSaveProgressText(`Đang tải ảnh #${idx + 1} lên Supabase (${i + 1}/${pendingIndices.length})...`);
+
+          // Lấy URL ảnh cũ thực tế từ settings gốc để xóa dọn dẹp trên Supabase Storage
+          const oldImageSrc = settings.gallery_images[idx]?.src || "";
+          const oldThumbSrc = settings.gallery_images[idx]?.thumb || "";
+
+          const uploadForm = new FormData();
+          uploadForm.append("file", item.fullBlob, item.fileName);
+          uploadForm.append("thumbFile", item.thumbBlob, `thumb-${item.fileName}`);
+          uploadForm.append("name", `sample-${idx + 1}-${Date.now()}.jpg`);
+          if (oldImageSrc && !oldImageSrc.startsWith("blob:") && !oldImageSrc.startsWith("data:")) {
+            uploadForm.append("oldUrl", oldImageSrc);
+          }
+          if (oldThumbSrc && !oldThumbSrc.startsWith("blob:") && !oldThumbSrc.startsWith("data:")) {
+            uploadForm.append("oldThumbUrl", oldThumbSrc);
+          }
+
+          const uploadRes = await fetch("/api/admin/upload", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: uploadForm,
+          });
+
+          const uploadData = await uploadRes.json();
+          if (!uploadRes.ok || !uploadData.success) {
+            throw new Error(uploadData.message || `Lỗi tải ảnh #${idx + 1} lên Supabase`);
+          }
+
+          // Cập nhật URL vĩnh viễn trên Supabase
+          finalGalleryImages[idx] = {
+            ...finalGalleryImages[idx],
+            src: uploadData.url,
+            thumb: uploadData.thumbUrl || uploadData.url,
+          };
+        }
+      }
+
+      setSaveProgressText("Đang đồng bộ cấu hình vào database...");
+
+      const payloadToSave: SiteSettings = {
+        ...formData,
+        gallery_images: finalGalleryImages,
+      };
+
       const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payloadToSave),
       });
 
       const data = await res.json();
@@ -263,27 +309,42 @@ export default function AdminPage() {
       }
 
       const savedSettings = data.settings || {
-        ...formData,
+        ...payloadToSave,
         gallery_version: data.version || Date.now().toString(),
       };
 
+      // Xóa danh sách chờ tải lên vì đã tải lên thành công
+      setPendingUploads({});
       updateSettings(savedSettings);
       setFormData(savedSettings);
       setHasChanges(false);
-      showToast("💾 Đã lưu và đồng bộ toàn bộ dữ liệu thành công!");
+      showToast("💾 Đã tải ảnh lên Supabase và lưu tất cả thay đổi thành công!");
     } catch (err: unknown) {
+      console.error(err);
       showToast(err instanceof Error ? err.message : "Lỗi lưu dữ liệu", "error");
     } finally {
       setIsSaving(false);
+      setSaveProgressText("");
+    }
+  };
+
+  // Hủy toàn bộ thay đổi chưa lưu (bao gồm cả các ảnh lưu tạm)
+  const handleDiscardChanges = () => {
+    if (confirm("Hủy bỏ tất cả các thay đổi chưa lưu (bao gồm các ảnh đã chọn tạm thời)?")) {
+      setPendingUploads({});
+      setFormData(settings);
+      setHasChanges(false);
+      showToast("Đã hủy bỏ các thay đổi chưa lưu.");
     }
   };
 
   // Reset to default
   const handleResetDefaults = () => {
     if (confirm("Khôi phục toàn bộ nội dung về mặc định ban đầu?")) {
+      setPendingUploads({});
       setFormData(DEFAULT_SETTINGS);
       setHasChanges(true);
-      showToast("Đã khôi phục dữ liệu mẫu. Hãy bấm 'Lưu Thay Đổi' để đồng bộ.");
+      showToast("Đã khôi phục dữ liệu mẫu. Hãy bấm 'Lưu Tất Cả Thay Đổi' để đồng bộ.");
     }
   };
 
@@ -600,11 +661,16 @@ export default function AdminPage() {
                             <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] sm:text-[11px] font-extrabold px-2.5 py-1 rounded-lg backdrop-blur-xs">
                               {idx === 0 ? "★ Slot #1 (16:10)" : `Slot #${idx + 1} (3:4)`}
                             </div>
-                            {img.thumb && (
+                            {pendingUploads[idx] ? (
+                              <div className="absolute bottom-2 right-2 bg-amber-600/90 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-md backdrop-blur-xs shadow-xs flex items-center gap-1 animate-pulse">
+                                <span>🟡</span>
+                                <span>Lưu tạm (Chưa tải lên)</span>
+                              </div>
+                            ) : img.thumb ? (
                               <div className="absolute bottom-2 right-2 bg-emerald-700/85 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-md backdrop-blur-xs shadow-xs">
                                 ✓ Đã cắt tỉ lệ
                               </div>
-                            )}
+                            ) : null}
                           </div>
 
                           <button
@@ -626,6 +692,12 @@ export default function AdminPage() {
                             )}
                           </button>
 
+                          {pendingUploads[idx] && (
+                            <div className="text-[10px] text-amber-800 bg-amber-50 border border-amber-300/80 rounded-xl px-2.5 py-1 text-center font-bold w-full leading-snug">
+                              ⏳ Ảnh mới đang lưu tạm. Bấm &quot;Lưu Tất Cả Thay Đổi&quot; ở cuối trang để tải lên Supabase.
+                            </div>
+                          )}
+
                           {img.src && !img.src.startsWith("data:") && (
                             <a
                               href={img.src}
@@ -635,7 +707,7 @@ export default function AdminPage() {
                               title="Xem ảnh full gốc đầy đủ trong tab mới"
                             >
                               <span>🔍</span>
-                              <span>Xem ảnh full gốc</span>
+                              <span>Xem ảnh full</span>
                             </a>
                           )}
                         </div>
@@ -1258,8 +1330,13 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4 w-full">
           <div className="flex items-center gap-2 text-xs text-[#4A2810]/70 font-semibold w-full sm:w-auto justify-center sm:justify-start">
             {hasChanges ? (
-              <span className="text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-300 flex items-center gap-1.5 text-[11px] sm:text-xs">
-                <span>●</span> Có thay đổi chưa lưu vào database
+              <span className="text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-300 flex items-center gap-1.5 text-[11px] sm:text-xs font-bold">
+                <span>●</span> Có thay đổi chưa lưu
+                {Object.keys(pendingUploads).length > 0 && (
+                  <span className="bg-amber-200/80 text-amber-900 px-1.5 py-0.2 rounded-md font-extrabold ml-0.5">
+                    {Object.keys(pendingUploads).length} ảnh lưu tạm
+                  </span>
+                )}
               </span>
             ) : (
               <span className="text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5 text-[11px] sm:text-xs">
@@ -1269,6 +1346,19 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+            {hasChanges && (
+              <button
+                type="button"
+                onClick={handleDiscardChanges}
+                disabled={isSaving}
+                className="px-3.5 py-2 sm:py-2.5 rounded-2xl border border-apple-red/25 text-[#4A2810] hover:bg-apple-red-50 text-xs sm:text-sm font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                title="Hủy bỏ tất cả các thay đổi chưa lưu"
+              >
+                <span>✕</span>
+                <span>Hủy thay đổi</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleResetDefaults}
@@ -1286,7 +1376,7 @@ export default function AdminPage() {
               {isSaving ? (
                 <>
                   <span className="animate-spin text-sm">⏳</span>
-                  <span>Đang lưu...</span>
+                  <span>{saveProgressText || "Đang lưu..."}</span>
                 </>
               ) : (
                 <>
