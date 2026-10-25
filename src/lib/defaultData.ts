@@ -39,6 +39,7 @@ export interface SiteSettings {
   pricing_notes: string[];
   tos_sections: ToSSection[];
   about_me: AboutMeData;
+  contact_facebook?: string;
   gallery_version?: string;
 }
 
@@ -152,5 +153,6 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   pricing_notes: DEFAULT_PRICING_NOTES,
   tos_sections: DEFAULT_TOS_SECTIONS,
   about_me: DEFAULT_ABOUT_ME,
+  contact_facebook: "https://www.facebook.com/p/%C4%90inh-H%C6%B0%C6%A1ng-61591273319002/",
   gallery_version: "1",
 };

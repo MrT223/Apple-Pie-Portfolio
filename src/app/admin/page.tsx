@@ -1213,6 +1213,29 @@ export default function AdminPage() {
                       className="w-full px-3.5 py-2.5 rounded-2xl border-2 border-apple-red/20 text-xs sm:text-sm text-[#4A2810] font-medium leading-relaxed bg-[#FFFDF9] focus:border-apple-red focus:outline-hidden"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#4A2810] mb-1 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>🔵</span>
+                      <span>Link Facebook Của Artist</span>
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.contact_facebook || ""}
+                      placeholder="https://www.facebook.com/..."
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          contact_facebook: e.target.value,
+                        });
+                        setHasChanges(true);
+                      }}
+                      className="w-full px-3.5 py-2 rounded-2xl border-2 border-apple-red/20 font-medium text-xs sm:text-sm text-[#4A2810] bg-[#FFFDF9] focus:border-apple-red focus:outline-hidden"
+                    />
+                    <p className="text-[11px] text-[#4A2810]/70 mt-1">
+                      Đường dẫn khi khách bấm nút <strong>&quot;Đặt Commission Ngay&quot;</strong> và nút nhắn tin ở mục About Me.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Live Preview Card */}
