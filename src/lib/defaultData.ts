@@ -1,6 +1,7 @@
 export interface GalleryImage {
   id: number;
   src: string;
+  thumb?: string;
   alt: string;
 }
 

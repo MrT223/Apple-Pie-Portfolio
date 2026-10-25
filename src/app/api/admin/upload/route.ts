@@ -32,8 +32,10 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
+    const thumbFile = formData.get("thumbFile") as File | null;
     const customName = formData.get("name") as string | null;
     const oldUrl = formData.get("oldUrl") as string | null;
+    const oldThumbUrl = formData.get("oldThumbUrl") as string | null;
 
     if (!file) {
       return NextResponse.json(
@@ -45,6 +47,9 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const ext = file.name.split(".").pop() || "jpg";
     const filename = customName || `artwork-${Date.now()}.${ext}`;
+    const thumbFilename = filename.replace(new RegExp(`\\.${ext}$`), `-thumb.${ext}`);
+
+    const thumbBuffer = thumbFile ? Buffer.from(await thumbFile.arrayBuffer()) : null;
 
     const supabase = getSupabaseClient();
 
@@ -63,28 +68,59 @@ export async function POST(req: NextRequest) {
             .from(BUCKET_NAME)
             .getPublicUrl(filename);
 
+          let thumbPublicUrl: string | undefined = undefined;
+
+          // Upload thumb nếu có
+          if (thumbBuffer && thumbFile) {
+            const { error: thumbUploadError } = await supabase.storage
+              .from(BUCKET_NAME)
+              .upload(thumbFilename, thumbBuffer, {
+                contentType: thumbFile.type || "image/jpeg",
+                upsert: true,
+              });
+
+            if (!thumbUploadError) {
+              const { data: thumbData } = supabase.storage
+                .from(BUCKET_NAME)
+                .getPublicUrl(thumbFilename);
+              thumbPublicUrl = thumbData.publicUrl;
+            } else {
+              console.warn("[Upload] Thumb upload error:", thumbUploadError);
+            }
+          }
+
           // Tự động xóa ảnh cũ trên Supabase Storage nếu có để giải phóng dung lượng
+          const pathsToDelete: string[] = [];
           if (oldUrl) {
             const oldPath = extractStoragePath(oldUrl, BUCKET_NAME);
-            if (oldPath && oldPath !== filename) {
-              try {
-                const { error: removeError } = await supabase.storage
-                  .from(BUCKET_NAME)
-                  .remove([oldPath]);
-                if (removeError) {
-                  console.warn("[Upload] Cảnh báo không thể xóa ảnh cũ:", removeError);
-                } else {
-                  console.log(`[Upload] Đã xóa ảnh cũ trên Supabase thành công: ${oldPath}`);
-                }
-              } catch (delErr) {
-                console.warn("[Upload] Lỗi xóa ảnh cũ:", delErr);
+            if (oldPath && oldPath !== filename) pathsToDelete.push(oldPath);
+          }
+          if (oldThumbUrl) {
+            const oldThumbPath = extractStoragePath(oldThumbUrl, BUCKET_NAME);
+            if (oldThumbPath && oldThumbPath !== thumbFilename && !pathsToDelete.includes(oldThumbPath)) {
+              pathsToDelete.push(oldThumbPath);
+            }
+          }
+
+          if (pathsToDelete.length > 0) {
+            try {
+              const { error: removeError } = await supabase.storage
+                .from(BUCKET_NAME)
+                .remove(pathsToDelete);
+              if (removeError) {
+                console.warn("[Upload] Cảnh báo không thể xóa ảnh cũ:", removeError);
+              } else {
+                console.log(`[Upload] Đã xóa ảnh cũ trên Supabase:`, pathsToDelete);
               }
+            } catch (delErr) {
+              console.warn("[Upload] Lỗi xóa ảnh cũ:", delErr);
             }
           }
 
           return NextResponse.json({
             success: true,
             url: publicData.publicUrl,
+            thumbUrl: thumbPublicUrl || publicData.publicUrl,
             storage: "supabase",
           });
         } else {
@@ -105,16 +141,26 @@ export async function POST(req: NextRequest) {
       const filePath = path.join(uploadDir, filename);
       fs.writeFileSync(filePath, buffer);
 
+      let localThumbUrl = `/uploads/${filename}`;
+      if (thumbBuffer) {
+        const thumbFilePath = path.join(uploadDir, thumbFilename);
+        fs.writeFileSync(thumbFilePath, thumbBuffer);
+        localThumbUrl = `/uploads/${thumbFilename}`;
+      }
+
       // Tự động xóa file cũ local nếu có
-      if (oldUrl && oldUrl.startsWith("/uploads/")) {
-        const oldLocalName = oldUrl.replace("/uploads/", "");
-        const oldLocalPath = path.join(uploadDir, oldLocalName);
-        if (fs.existsSync(oldLocalPath) && oldLocalName !== filename) {
-          try {
-            fs.unlinkSync(oldLocalPath);
-            console.log(`[Upload] Đã xóa ảnh cũ local: ${oldLocalName}`);
-          } catch (e) {
-            console.warn("[Upload] Lỗi xóa ảnh cũ local:", e);
+      const localFilesToDelete = [oldUrl, oldThumbUrl].filter(Boolean) as string[];
+      for (const u of localFilesToDelete) {
+        if (u.startsWith("/uploads/")) {
+          const oldLocalName = u.replace("/uploads/", "");
+          const oldLocalPath = path.join(uploadDir, oldLocalName);
+          if (fs.existsSync(oldLocalPath) && oldLocalName !== filename && oldLocalName !== thumbFilename) {
+            try {
+              fs.unlinkSync(oldLocalPath);
+              console.log(`[Upload] Đã xóa ảnh cũ local: ${oldLocalName}`);
+            } catch (e) {
+              console.warn("[Upload] Lỗi xóa ảnh cũ local:", e);
+            }
           }
         }
       }
@@ -122,15 +168,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         url: `/uploads/${filename}`,
+        thumbUrl: localThumbUrl,
         storage: "local",
       });
     } catch (localErr) {
       console.warn("[Upload] Local save failed, fallback to base64:", localErr);
       // Fallback base64
       const base64 = `data:${file.type || "image/jpeg"};base64,${buffer.toString("base64")}`;
+      const thumbBase64 = thumbBuffer
+        ? `data:${thumbFile?.type || "image/jpeg"};base64,${thumbBuffer.toString("base64")}`
+        : base64;
       return NextResponse.json({
         success: true,
         url: base64,
+        thumbUrl: thumbBase64,
         storage: "base64",
       });
     }

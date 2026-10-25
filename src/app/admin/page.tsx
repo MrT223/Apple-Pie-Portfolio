@@ -8,6 +8,7 @@ import {
   ToSSection,
 } from "@/lib/defaultData";
 import { useSettings } from "@/lib/useSettings";
+import ImageCropModal from "@/components/ImageCropModal";
 
 type TabKey = "gallery" | "pricing" | "notes" | "tos" | "about";
 
@@ -67,6 +68,12 @@ export default function AdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [cropState, setCropState] = useState<{
+    file: File;
+    slotIndex: number;
+    slotName: string;
+    aspectRatio: number;
+  } | null>(null);
   const [notification, setNotification] = useState<{
     type: "success" | "error";
     text: string;
@@ -161,23 +168,50 @@ export default function AdminPage() {
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const targetIdx = currentUploadTargetRef.current;
     if (!file || targetIdx === null) return;
 
-    setUploadingIndex(targetIdx);
-    try {
-      // Resize & compress
-      const compressedBlob = await resizeImageBeforeUpload(file, 1200);
+    // Reset input để chọn lại cùng 1 file vẫn kích hoạt change
+    e.target.value = "";
 
+    // Mở modal cắt ảnh chuẩn theo tỉ lệ từng khung tranh
+    setCropState({
+      file,
+      slotIndex: targetIdx,
+      slotName: targetIdx === 0 ? "Slot #1 (Tranh Bìa Ngang 16:10)" : `Slot #${targetIdx + 1} (Tranh Dọc 3:4)`,
+      aspectRatio: targetIdx === 0 ? 16 / 10 : 3 / 4,
+    });
+  };
+
+  // Xử lý sau khi artist đã căn góc và xác nhận cắt ảnh
+  const handleCropConfirm = async ({
+    fullBlob,
+    thumbBlob,
+  }: {
+    fullBlob: Blob;
+    thumbBlob: Blob;
+  }) => {
+    if (!cropState) return;
+    const targetIdx = cropState.slotIndex;
+    const file = cropState.file;
+    setCropState(null);
+    setUploadingIndex(targetIdx);
+
+    try {
       const oldImageSrc = formData.gallery_images[targetIdx]?.src || "";
+      const oldThumbSrc = formData.gallery_images[targetIdx]?.thumb || "";
 
       const uploadForm = new FormData();
-      uploadForm.append("file", compressedBlob, file.name);
+      uploadForm.append("file", fullBlob, file.name);
+      uploadForm.append("thumbFile", thumbBlob, `thumb-${file.name}`);
       uploadForm.append("name", `sample-${targetIdx + 1}-${Date.now()}.jpg`);
       if (oldImageSrc) {
         uploadForm.append("oldUrl", oldImageSrc);
+      }
+      if (oldThumbSrc) {
+        uploadForm.append("oldThumbUrl", oldThumbSrc);
       }
 
       const res = await fetch("/api/admin/upload", {
@@ -195,10 +229,11 @@ export default function AdminPage() {
       updatedGallery[targetIdx] = {
         ...updatedGallery[targetIdx],
         src: data.url,
+        thumb: data.thumbUrl || data.url,
       };
       setFormData({ ...formData, gallery_images: updatedGallery });
       setHasChanges(true);
-      showToast(`Đã thay ảnh mẫu #${targetIdx + 1}! Bấm 'Lưu Thay Đổi' để hoàn tất.`);
+      showToast(`Đã cắt & cập nhật ảnh mẫu #${targetIdx + 1}! Bấm 'Lưu Thay Đổi' để hoàn tất.`);
     } catch (err: unknown) {
       console.error(err);
       showToast(err instanceof Error ? err.message : "Lỗi upload ảnh", "error");
@@ -558,13 +593,18 @@ export default function AdminPage() {
                             `}
                           >
                             <img
-                              src={img.src}
+                              src={img.thumb || img.src}
                               alt={img.alt}
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] sm:text-[11px] font-extrabold px-2.5 py-1 rounded-lg backdrop-blur-xs">
-                              {idx === 0 ? "★ Slot #1 (Tranh Bìa Lớn)" : `Slot #${idx + 1}`}
+                              {idx === 0 ? "★ Slot #1 (16:10)" : `Slot #${idx + 1} (3:4)`}
                             </div>
+                            {img.thumb && (
+                              <div className="absolute bottom-2 right-2 bg-emerald-700/85 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-md backdrop-blur-xs shadow-xs">
+                                ✓ Đã cắt tỉ lệ
+                              </div>
+                            )}
                           </div>
 
                           <button
@@ -576,15 +616,28 @@ export default function AdminPage() {
                             {uploadingIndex === idx ? (
                               <>
                                 <span className="animate-spin text-sm">⏳</span>
-                                <span>Đang nén ảnh...</span>
+                                <span>Đang xử lý ảnh...</span>
                               </>
                             ) : (
                               <>
-                                <span>📁</span>
-                                <span>Tải Ảnh Mới Từ Máy</span>
+                                <span>✂️</span>
+                                <span>Chọn Ảnh & Cắt Tỉ Lệ</span>
                               </>
                             )}
                           </button>
+
+                          {img.src && !img.src.startsWith("data:") && (
+                            <a
+                              href={img.src}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[11px] font-bold text-[#4A2810]/70 hover:text-apple-red transition-colors flex items-center gap-1 mt-0.5"
+                              title="Xem ảnh full gốc đầy đủ trong tab mới"
+                            >
+                              <span>🔍</span>
+                              <span>Xem ảnh full gốc</span>
+                            </a>
+                          )}
                         </div>
 
                         {/* Input Fields */}
@@ -1245,6 +1298,21 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal Cắt Ảnh Tương Tác Theo Tỉ Lệ Khung Tranh */}
+      {cropState && (
+        <ImageCropModal
+          file={cropState.file}
+          slotIndex={cropState.slotIndex}
+          slotName={cropState.slotName}
+          aspectRatio={cropState.aspectRatio}
+          onConfirm={handleCropConfirm}
+          onCancel={() => {
+            setCropState(null);
+            currentUploadTargetRef.current = null;
+          }}
+        />
+      )}
     </div>
   );
 }

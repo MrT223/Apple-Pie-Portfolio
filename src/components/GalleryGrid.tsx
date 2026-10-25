@@ -42,7 +42,7 @@ export default function GalleryGrid() {
               id={`gallery-item-${img.id}`}
             >
               <img
-                src={img.src}
+                src={img.thumb || img.src}
                 alt={img.alt}
                 className="w-full h-full object-cover"
                 loading="lazy"
