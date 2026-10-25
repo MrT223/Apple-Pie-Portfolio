@@ -652,11 +652,10 @@ export default function AdminPage() {
 
                 {/* Table strictly scrolls internally */}
                 <div className="w-full max-w-full overflow-x-auto pb-2 scrollbar-thin">
-                  <table className="w-full min-w-[460px] text-left text-xs sm:text-sm">
+                  <table className="w-full min-w-[340px] text-left text-xs sm:text-sm">
                     <thead>
                       <tr className="border-b-2 border-apple-red/15 text-[#4A2810]/70 uppercase text-[11px] font-extrabold">
                         <th className="py-2.5 px-3">Hạng mục</th>
-                        <th className="py-2.5 px-3 text-emerald-800">Sketch</th>
                         <th className="py-2.5 px-3 text-rose-800">Lineart</th>
                         <th className="py-2.5 px-3 text-amber-900">Full Color</th>
                       </tr>
@@ -674,20 +673,7 @@ export default function AdminPage() {
                                 setFormData({ ...formData, pricing_normal: copy });
                                 setHasChanges(true);
                               }}
-                              className="w-24 sm:w-28 px-2.5 py-1.5 rounded-xl border border-apple-red/20 text-xs sm:text-sm font-extrabold text-[#4A2810] bg-white shadow-xs"
-                            />
-                          </td>
-                          <td className="py-2.5 px-3">
-                            <input
-                              type="text"
-                              value={row.sketch}
-                              onChange={(e) => {
-                                const copy = [...formData.pricing_normal];
-                                copy[idx] = { ...copy[idx], sketch: e.target.value };
-                                setFormData({ ...formData, pricing_normal: copy });
-                                setHasChanges(true);
-                              }}
-                              className="w-24 sm:w-28 px-2.5 py-1.5 rounded-xl border border-emerald-200 text-xs sm:text-sm font-extrabold text-emerald-800 bg-emerald-50/40"
+                              className="w-28 sm:w-32 px-2.5 py-1.5 rounded-xl border border-apple-red/20 text-xs sm:text-sm font-extrabold text-[#4A2810] bg-white shadow-xs"
                             />
                           </td>
                           <td className="py-2.5 px-3">
@@ -700,7 +686,7 @@ export default function AdminPage() {
                                 setFormData({ ...formData, pricing_normal: copy });
                                 setHasChanges(true);
                               }}
-                              className="w-24 sm:w-28 px-2.5 py-1.5 rounded-xl border border-rose-200 text-xs sm:text-sm font-extrabold text-apple-red bg-rose-50/40"
+                              className="w-28 sm:w-32 px-2.5 py-1.5 rounded-xl border border-rose-200 text-xs sm:text-sm font-extrabold text-apple-red bg-rose-50/40"
                             />
                           </td>
                           <td className="py-2.5 px-3">
@@ -713,7 +699,7 @@ export default function AdminPage() {
                                 setFormData({ ...formData, pricing_normal: copy });
                                 setHasChanges(true);
                               }}
-                              className="w-24 sm:w-28 px-2.5 py-1.5 rounded-xl border-2 border-amber-300 text-xs sm:text-sm font-extrabold text-[#4A2810] bg-amber-50"
+                              className="w-28 sm:w-32 px-2.5 py-1.5 rounded-xl border-2 border-amber-300 text-xs sm:text-sm font-extrabold text-[#4A2810] bg-amber-50"
                             />
                           </td>
                         </tr>
@@ -738,12 +724,11 @@ export default function AdminPage() {
                 </div>
 
                 <div className="w-full max-w-full overflow-x-auto pb-2 scrollbar-thin">
-                  <table className="w-full min-w-[460px] text-left text-xs sm:text-sm">
+                  <table className="w-full min-w-[340px] text-left text-xs sm:text-sm">
                     <thead>
                       <tr className="border-b-2 border-leaf-green/20 text-[#4A2810]/70 uppercase text-[11px] font-extrabold">
                         <th className="py-2.5 px-3">Hạng mục</th>
-                        <th className="py-2.5 px-3 text-emerald-800">Sketch</th>
-                        <th className="py-2.5 px-3 text-rose-800">Lineart</th>
+                        <th className="py-2.5 px-3 text-emerald-800">Lineart</th>
                         <th className="py-2.5 px-3 text-amber-900">Full Color</th>
                       </tr>
                     </thead>
@@ -760,20 +745,7 @@ export default function AdminPage() {
                                 setFormData({ ...formData, pricing_chibi: copy });
                                 setHasChanges(true);
                               }}
-                              className="w-24 sm:w-28 px-2.5 py-1.5 rounded-xl border border-leaf-green/25 text-xs sm:text-sm font-extrabold text-[#4A2810] bg-white shadow-xs"
-                            />
-                          </td>
-                          <td className="py-2.5 px-3">
-                            <input
-                              type="text"
-                              value={row.sketch}
-                              onChange={(e) => {
-                                const copy = [...formData.pricing_chibi];
-                                copy[idx] = { ...copy[idx], sketch: e.target.value };
-                                setFormData({ ...formData, pricing_chibi: copy });
-                                setHasChanges(true);
-                              }}
-                              className="w-24 sm:w-28 px-2.5 py-1.5 rounded-xl border border-emerald-200 text-xs sm:text-sm font-extrabold text-emerald-800 bg-emerald-50/40"
+                              className="w-28 sm:w-32 px-2.5 py-1.5 rounded-xl border border-leaf-green/25 text-xs sm:text-sm font-extrabold text-[#4A2810] bg-white shadow-xs"
                             />
                           </td>
                           <td className="py-2.5 px-3">
@@ -786,7 +758,7 @@ export default function AdminPage() {
                                 setFormData({ ...formData, pricing_chibi: copy });
                                 setHasChanges(true);
                               }}
-                              className="w-24 sm:w-28 px-2.5 py-1.5 rounded-xl border border-rose-200 text-xs sm:text-sm font-extrabold text-apple-red bg-rose-50/40"
+                              className="w-28 sm:w-32 px-2.5 py-1.5 rounded-xl border border-rose-200 text-xs sm:text-sm font-extrabold text-apple-red bg-rose-50/40"
                             />
                           </td>
                           <td className="py-2.5 px-3">
@@ -799,7 +771,7 @@ export default function AdminPage() {
                                 setFormData({ ...formData, pricing_chibi: copy });
                                 setHasChanges(true);
                               }}
-                              className="w-24 sm:w-28 px-2.5 py-1.5 rounded-xl border-2 border-amber-300 text-xs sm:text-sm font-extrabold text-[#4A2810] bg-amber-50"
+                              className="w-28 sm:w-32 px-2.5 py-1.5 rounded-xl border-2 border-amber-300 text-xs sm:text-sm font-extrabold text-[#4A2810] bg-amber-50"
                             />
                           </td>
                         </tr>

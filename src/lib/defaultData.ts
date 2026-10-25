@@ -6,7 +6,7 @@ export interface GalleryImage {
 
 export interface PricingItem {
   type: string;
-  sketch: string;
+  sketch?: string;
   line: string;
   full: string;
 }
@@ -70,17 +70,17 @@ export const DEFAULT_GALLERY_IMAGES: GalleryImage[] = [
 ];
 
 export const DEFAULT_PRICING_NORMAL: PricingItem[] = [
-  { type: "Headshot", sketch: "120.000₫", line: "180.000₫", full: "380.000₫" },
-  { type: "Chest-up", sketch: "160.000₫", line: "230.000₫", full: "480.000₫" },
-  { type: "Half-body", sketch: "200.000₫", line: "300.000₫", full: "600.000₫" },
-  { type: "Knee-up", sketch: "250.000₫", line: "370.000₫", full: "750.000₫" },
-  { type: "Full-body", sketch: "330.000₫", line: "500.000₫", full: "1.000.000₫" },
+  { type: "Headshot", line: "180.000₫", full: "380.000₫" },
+  { type: "Chest-up", line: "230.000₫", full: "480.000₫" },
+  { type: "Half-body", line: "300.000₫", full: "600.000₫" },
+  { type: "Knee-up", line: "370.000₫", full: "750.000₫" },
+  { type: "Full-body", line: "500.000₫", full: "1.000.000₫" },
 ];
 
 export const DEFAULT_PRICING_CHIBI: PricingItem[] = [
-  { type: "Headshot", sketch: "80.000₫", line: "120.000₫", full: "180.000₫" },
-  { type: "Half-body", sketch: "120.000₫", line: "170.000₫", full: "300.000₫" },
-  { type: "Full-body", sketch: "150.000₫", line: "250.000₫", full: "500.000₫" },
+  { type: "Headshot", line: "120.000₫", full: "180.000₫" },
+  { type: "Half-body", line: "170.000₫", full: "300.000₫" },
+  { type: "Full-body", line: "250.000₫", full: "500.000₫" },
 ];
 
 export const DEFAULT_PRICING_YCH: YCHPricing = {

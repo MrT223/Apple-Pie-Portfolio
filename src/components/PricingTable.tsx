@@ -74,31 +74,21 @@ function NormalPricingCards({ prices }: { prices: PricingItem[] }) {
             </h3>
           </div>
 
-          {/* Price grid */}
-          <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-            <div className="rounded-2xl p-2.5 sm:p-3 text-center bg-emerald-50/70 border border-emerald-200/60">
-              <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider block mb-1 text-emerald-800">
-                Sketch
-              </span>
-              <span className="text-sm sm:text-base font-extrabold text-emerald-900 block">
-                {item.sketch}
-              </span>
-            </div>
-
-            <div className="rounded-2xl p-2.5 sm:p-3 text-center bg-rose-50/70 border border-rose-200/60">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="rounded-2xl p-3.5 sm:p-4 text-center bg-rose-50/70 border border-rose-200/70 hover:border-rose-300 transition-colors">
               <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider block mb-1 text-rose-800">
                 Lineart
               </span>
-              <span className="text-sm sm:text-base font-extrabold text-apple-red block">
+              <span className="text-base sm:text-lg font-extrabold text-apple-red block">
                 {item.line}
               </span>
             </div>
 
-            <div className="rounded-2xl p-2.5 sm:p-3 text-center bg-amber-100/60 border-2 border-amber-300 shadow-xs">
+            <div className="rounded-2xl p-3.5 sm:p-4 text-center bg-amber-100/60 border-2 border-amber-300 shadow-xs hover:border-amber-400 transition-colors">
               <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider block mb-1 text-amber-900">
-                Full Color
+                Full Color ✦
               </span>
-              <span className="text-sm sm:text-base font-extrabold text-[#4A2810] block">
+              <span className="text-base sm:text-lg font-extrabold text-[#4A2810] block">
                 {item.full}
               </span>
             </div>
@@ -125,30 +115,21 @@ function ChibiPricingCards({ prices }: { prices: PricingItem[] }) {
             </h3>
           </div>
 
-          <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-            <div className="rounded-2xl p-2.5 sm:p-3 text-center bg-emerald-50/70 border border-emerald-200/60">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="rounded-2xl p-3.5 sm:p-4 text-center bg-emerald-50/70 border border-emerald-200/70 hover:border-emerald-300 transition-colors">
               <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider block mb-1 text-emerald-800">
-                Sketch
-              </span>
-              <span className="text-sm sm:text-base font-extrabold text-emerald-900 block">
-                {item.sketch}
-              </span>
-            </div>
-
-            <div className="rounded-2xl p-2.5 sm:p-3 text-center bg-rose-50/70 border border-rose-200/60">
-              <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider block mb-1 text-rose-800">
                 Lineart
               </span>
-              <span className="text-sm sm:text-base font-extrabold text-apple-red block">
+              <span className="text-base sm:text-lg font-extrabold text-leaf-green-dark block">
                 {item.line}
               </span>
             </div>
 
-            <div className="rounded-2xl p-2.5 sm:p-3 text-center bg-amber-100/60 border-2 border-amber-300 shadow-xs">
+            <div className="rounded-2xl p-3.5 sm:p-4 text-center bg-amber-100/60 border-2 border-amber-300 shadow-xs hover:border-amber-400 transition-colors">
               <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider block mb-1 text-amber-900">
-                Full Color
+                Full Color ✦
               </span>
-              <span className="text-sm sm:text-base font-extrabold text-[#4A2810] block">
+              <span className="text-base sm:text-lg font-extrabold text-[#4A2810] block">
                 {item.full}
               </span>
             </div>
