@@ -28,24 +28,6 @@ export default function AboutSection() {
           <p className="text-[#4A2810]/80 whitespace-pre-line">
             {about.outro}
           </p>
-
-          <div className="pt-2">
-            <a
-              href={settings.contact_facebook || "https://www.facebook.com/p/%C4%90inh-H%C6%B0%C6%A1ng-61591273319002/"}
-              target="_blank"
-              rel="noopener noreferrer"
-              id="about-facebook-cta"
-              className="
-                inline-flex items-center justify-center gap-2 px-6 py-2.5
-                bg-[#1877F2] hover:bg-[#166FE5] text-white font-extrabold text-sm rounded-full
-                shadow-md shadow-[#1877F2]/25 hover:shadow-lg hover:shadow-[#1877F2]/30
-                active:scale-95 transition-all duration-300 cursor-pointer
-              "
-            >
-              <span>💬</span>
-              <span>Nhắn Tin Với Artist Trên Facebook</span>
-            </a>
-          </div>
         </div>
 
         {/* Decorative bottom */}
