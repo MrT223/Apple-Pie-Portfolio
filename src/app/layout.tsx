@@ -3,6 +3,7 @@ import "./globals.css";
 import { FallingApples, FloatingLeaves } from "@/components/AppleAnimations";
 import { SettingsProvider } from "@/lib/useSettings";
 import AppShell from "@/components/AppShell";
+import { Analytics } from "@vercel/analytics/react";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -37,6 +38,9 @@ export default function RootLayout({
         <SettingsProvider>
           <AppShell>{children}</AppShell>
         </SettingsProvider>
+
+        {/* Vercel Web Analytics */}
+        <Analytics />
       </body>
     </html>
   );
