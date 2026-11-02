@@ -127,7 +127,7 @@ export default function HeroSection() {
 
           {/* Artist name */}
           <h1 className="font-[family-name:var(--font-family-display)] text-4xl sm:text-5xl text-apple-red text-shadow-cute mb-3">
-            🍎 Pie
+            🍎 Pie 🍏
           </h1>
 
           {/* Subtitle */}

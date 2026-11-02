@@ -12,11 +12,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "🍎 Pie — Commission Portfolio",
+  title: "🍎 Pie 🍏 — Commission Portfolio",
   description: "Digital artist portfolio & commission information. Illustrations, OC, fanart, chibi and more! コミッション受付中 ✿",
   keywords: ["digital art", "commission", "illustration", "chibi", "fanart", "artist portfolio"],
   openGraph: {
-    title: "🍎 Pie — Commission Portfolio",
+    title: "🍎 Pie 🍏 — Commission Portfolio",
     description: "Digital artist portfolio & commission information ✿",
     type: "website",
   },
